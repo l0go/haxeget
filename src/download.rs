@@ -5,7 +5,9 @@ use std::fs;
 use std::error::Error;
 use std::cmp::min;
 use std::io::Write;
+use futures::executor;
 use futures_util::StreamExt;
+use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
 use flate2::read::GzDecoder;
 use tar::Archive;
@@ -13,6 +15,18 @@ use tar::Archive;
 pub struct Download {
     pub file_name: String,
     pub directory: String,
+}
+
+pub async fn install(version: String) {
+    println!("Downloading Haxe {}", style(&version).yellow());
+    let download = executor::block_on(from_github(version));
+
+    let _ = match download {
+        Ok(dld) => extract_tarball(dld.directory, dld.file_name),
+        Err(error) => panic!("Uh oh! Download failed: {}.\nPlease create an issue at: {}/issues", error, env!("CARGO_PKG_REPOSITORY"))
+    };
+
+    println!("Installation Complete!")
 }
 
 /*
