@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::OpenOptions;
-use std::io::{self, Write, BufRead};
+use std::io::{self, BufRead, Write};
 use std::path::Path;
 
 pub fn get_directory_name() -> Result<String, String> {
@@ -8,7 +8,11 @@ pub fn get_directory_name() -> Result<String, String> {
     let home_dir = env::var("HOME").unwrap();
 
     if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
-        directory_path.push_str((env::var("XDG_BIN_HOME").unwrap_or((home_dir + "/.local/bin").to_owned()) + "/haxeget").as_str());
+        directory_path.push_str(
+            (env::var("XDG_BIN_HOME").unwrap_or((home_dir + "/.local/bin").to_owned())
+                + "/haxeget")
+                .as_str(),
+        );
     } else if cfg!(target_os = "macos") {
         directory_path.push_str((home_dir + "/home/logo/.haxeget").as_str());
     } else {
@@ -43,20 +47,21 @@ pub fn add_version_to_installed(version: &String, binary_directory: String) {
         .open(get_directory_name().unwrap() + "/_current/installed")
         .expect("Cannot open installed cache");
 
-    installed.write_fmt(format_args!("{} {}\n", version, binary_directory))
+    installed
+        .write_fmt(format_args!("{} {}\n", version, binary_directory))
         .expect("Cannot write to installed cache");
 }
 
 pub fn get_installed(version: &String) -> Option<String> {
     if let Ok(lines) = read_lines(get_directory_name().unwrap() + "/_current/installed") {
         for line in lines.flatten() {
-                let mut cached_version = line.split_whitespace();
-                let ver = cached_version.next().unwrap();
-                let directory = cached_version.next().unwrap();
+            let mut cached_version = line.split_whitespace();
+            let ver = cached_version.next().unwrap();
+            let directory = cached_version.next().unwrap();
 
-                if ver == version {
-                    return Some(directory.to_owned());
-                }
+            if ver == version {
+                return Some(directory.to_owned());
+            }
         }
     }
 
@@ -64,7 +69,9 @@ pub fn get_installed(version: &String) -> Option<String> {
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<std::fs::File>>>
-where P: AsRef<Path>, {
+where
+    P: AsRef<Path>,
+{
     let file = std::fs::File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }

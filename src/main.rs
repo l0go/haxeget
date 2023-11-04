@@ -1,6 +1,6 @@
-pub mod github_schema;
-pub mod filesystem;
 pub mod download;
+pub mod filesystem;
+pub mod github_schema;
 pub mod install_command;
 pub mod use_command;
 
@@ -21,7 +21,7 @@ enum Commands {
     },
     Use {
         version: String,
-    }
+    },
 }
 
 #[tokio::main]
@@ -33,4 +33,3 @@ async fn main() {
         Commands::Use { version } => use_command::run_use(version),
     }
 }
-

@@ -1,6 +1,6 @@
 // Generated with https://transform.tools/json-to-rust-serde
 // Could probably remove most of it, but might as well keep most of this for later usage
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub type Root = Vec<Release>;
 

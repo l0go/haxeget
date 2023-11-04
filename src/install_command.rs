@@ -1,12 +1,12 @@
 use super::download;
 use super::filesystem;
 
-use futures::executor;
 use console::style;
+use futures::executor;
 
 pub async fn run_install(version: String) {
     // Check if installed already
-    if filesystem::get_installed(&version).is_some() { 
+    if filesystem::get_installed(&version).is_some() {
         println!("{}", style("This version is already installed!").yellow());
         return;
     }
@@ -21,8 +21,12 @@ pub async fn run_install(version: String) {
             let location = download::get_binary_directory(&dld.directory, &dld.file_name).unwrap();
             download::extract_tarball(dld.directory, dld.file_name).unwrap();
             filesystem::add_version_to_installed(&version, location);
-        },
-        Err(error) => panic!("Uh oh! Download failed: {}.\nPlease create an issue at: {}/issues", error, env!("CARGO_PKG_REPOSITORY"))
+        }
+        Err(error) => panic!(
+            "Uh oh! Download failed: {}.\nPlease create an issue at: {}/issues",
+            error,
+            env!("CARGO_PKG_REPOSITORY")
+        ),
     };
 
     // Tada
