@@ -4,16 +4,18 @@ use console::style;
 use std::{env, fs};
 
 pub fn run_use(version: String) {
-    let directory = filesystem::get_directory_name();
-    
     // Check if installed already
     let tar_version = filesystem::get_installed(&version);
     if tar_version.is_none() {
-        println!("This version is not installed. Try running {}", style(format!("haxeget install {}", version)).yellow());
+        println!(
+            "This version is not installed. Try running {}",
+            style(format!("haxeget install {}", version)).yellow()
+        );
         return;
     }
     let tar_version = tar_version.unwrap();
 
+    let directory = filesystem::get_directory_name();
     let dir = match directory {
         Ok(_) => directory.unwrap(),
         Err(error) => panic!(

@@ -15,13 +15,10 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    #[command(alias("i"))]
-    Install {
-        version: String,
-    },
-    Use {
-        version: String,
-    },
+    #[command(alias("i"), about = "Installs the specified version")]
+    Install { version: String },
+    #[command(about = "Selects the version of Haxe to use")]
+    Use { version: String },
 }
 
 #[tokio::main]
