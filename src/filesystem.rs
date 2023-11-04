@@ -56,7 +56,12 @@ pub fn add_version_to_installed(version: &String, binary_directory: String) {
         .expect("Cannot write to installed cache");
 }
 
-pub fn get_installed(version: &String) -> Option<String> {
+pub fn get_installed() -> Result<std::io::Lines<std::io::BufReader<std::fs::File>>, std::io::Error>
+{
+    read_lines(get_directory_name().unwrap() + "/_current/installed")
+}
+
+pub fn find_installed(version: &String) -> Option<String> {
     if let Ok(lines) = read_lines(get_directory_name().unwrap() + "/_current/installed") {
         for line in lines.flatten() {
             let mut cached_version = line.split_whitespace();

@@ -2,6 +2,7 @@ pub mod download;
 pub mod filesystem;
 pub mod github_schema;
 pub mod install_command;
+pub mod list_command;
 pub mod use_command;
 
 use clap::{Parser, Subcommand};
@@ -16,9 +17,15 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     #[command(alias("i"), about = "Installs the specified version")]
-    Install { version: String },
-    #[command(about = "Selects the version of Haxe to use")]
-    Use { version: String },
+    Install {
+        version: String,
+    },
+    #[command(alias("switch"), about = "Selects the version of Haxe to use")]
+    Use {
+        version: String,
+    },
+    #[command(alias("ls"), about = "Lists the installed versions")]
+    List,
 }
 
 #[tokio::main]
@@ -28,5 +35,6 @@ async fn main() {
     match args.command {
         Commands::Install { version } => install_command::run_install(version).await,
         Commands::Use { version } => use_command::run_use(version),
+        Commands::List => list_command::installed(),
     }
 }

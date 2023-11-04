@@ -6,7 +6,7 @@ use futures::executor;
 
 pub async fn run_install(version: String) {
     // Check if installed already
-    if filesystem::get_installed(&version).is_some() {
+    if filesystem::find_installed(&version).is_some() {
         println!("{}", style("This version is already installed!").yellow());
         return;
     }

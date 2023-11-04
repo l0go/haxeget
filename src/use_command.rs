@@ -5,7 +5,7 @@ use std::{env, fs};
 
 pub fn run_use(version: String) {
     // Check if installed already
-    let tar_version = filesystem::get_installed(&version);
+    let tar_version = filesystem::find_installed(&version);
     if tar_version.is_none() {
         println!(
             "This version is not installed. Try running {}",
