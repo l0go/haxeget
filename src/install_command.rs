@@ -18,8 +18,9 @@ pub async fn run_install(version: String) {
     // If download was successful, we will extract the tarball and store the version
     match download {
         Ok(dld) => {
-            let location = download::get_binary_directory(&dld.directory, &dld.file_name).unwrap();
-            download::extract_tarball(dld.directory, dld.file_name).unwrap();
+            let location =
+                filesystem::get_binary_directory(&dld.directory, &dld.file_name).unwrap();
+            filesystem::extract_tarball(dld.directory, dld.file_name).unwrap();
             filesystem::add_version_to_installed(&version, location);
         }
         Err(error) => panic!(

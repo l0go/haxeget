@@ -1,7 +1,11 @@
+use flate2::read::GzDecoder;
 use std::env;
+use std::error::Error;
+use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, BufRead, Write};
 use std::path::Path;
+use tar::Archive;
 
 pub fn get_directory_name() -> Result<String, String> {
     let mut directory_path = String::new();
@@ -74,4 +78,39 @@ where
 {
     let file = std::fs::File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
+}
+
+// Handles tarball
+pub fn extract_tarball(directory: String, file_name: String) -> Result<(), Box<dyn Error>> {
+    let tarball = fs::File::open(format!("{directory}/bin/{file_name}"))?;
+    let tar = GzDecoder::new(tarball);
+    let mut archive = Archive::new(tar);
+
+    archive.unpack(format!("{directory}/bin/"))?;
+    fs::remove_file(format!("{directory}/bin/{file_name}"))?;
+
+    Ok(())
+}
+
+pub fn get_binary_directory(directory: &str, file_name: &str) -> Result<String, Box<dyn Error>> {
+    let tarball = fs::File::open(format!("{directory}/bin/{file_name}"))?;
+    let tar = GzDecoder::new(tarball);
+    let mut archive = Archive::new(tar);
+
+    // Get the name of the directory extracted
+    let mut name = String::new();
+    if let Some(file) = archive.entries().unwrap().next() {
+        let file = file.unwrap();
+        name.push_str(
+            file.header()
+                .path()
+                .unwrap()
+                .as_ref()
+                .to_str()
+                .expect("Unable to get extracted directory name"),
+        );
+        name.truncate(name.len() - 1);
+    }
+
+    Ok(name)
 }

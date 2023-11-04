@@ -1,14 +1,12 @@
 use super::filesystem;
 use super::github_schema;
 
-use flate2::read::GzDecoder;
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::cmp::min;
 use std::error::Error;
 use std::fs;
 use std::io::Write;
-use tar::Archive;
 
 pub struct Download {
     pub file_name: String,
@@ -98,39 +96,4 @@ async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> Resul
 
     pb.finish_with_message("🎉 Done Downloading!".to_string());
     Ok(())
-}
-
-// Extract tarball
-pub fn extract_tarball(directory: String, file_name: String) -> Result<(), Box<dyn Error>> {
-    let tarball = fs::File::open(format!("{directory}/bin/{file_name}"))?;
-    let tar = GzDecoder::new(tarball);
-    let mut archive = Archive::new(tar);
-
-    archive.unpack(format!("{directory}/bin/"))?;
-    fs::remove_file(format!("{directory}/bin/{file_name}"))?;
-
-    Ok(())
-}
-
-pub fn get_binary_directory(directory: &str, file_name: &str) -> Result<String, Box<dyn Error>> {
-    let tarball = fs::File::open(format!("{directory}/bin/{file_name}"))?;
-    let tar = GzDecoder::new(tarball);
-    let mut archive = Archive::new(tar);
-
-    // Get the name of the directory extracted
-    let mut name = String::new();
-    if let Some(file) = archive.entries().unwrap().next() {
-        let file = file.unwrap();
-        name.push_str(
-            file.header()
-                .path()
-                .unwrap()
-                .as_ref()
-                .to_str()
-                .expect("Unable to get extracted directory name"),
-        );
-        name.truncate(name.len() - 1);
-    }
-
-    Ok(name)
 }
