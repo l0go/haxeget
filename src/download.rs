@@ -1,10 +1,10 @@
 use super::filesystem;
 use super::github_schema;
 
+use console::style;
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::cmp::min;
-use std::error::Error;
 use std::fs;
 use std::io::Write;
 
@@ -16,7 +16,7 @@ pub struct Download {
 /*
  * Gets the executable from github and installs
  */
-pub async fn from_github(version: &String) -> Result<Download, Box<dyn Error>> {
+pub async fn from_github(version: &String) -> Result<Download, ()> {
     let client = reqwest::Client::new();
     let json: github_schema::Root = client
         .get("https://api.github.com/repos/HaxeFoundation/haxe/releases")
@@ -33,19 +33,51 @@ pub async fn from_github(version: &String) -> Result<Download, Box<dyn Error>> {
 
     let release = json
         .iter()
-        .find(|&release| &release.name == version)
-        .expect("The provided version was not found");
+        .find(|&release| &release.name == version);
+
+    let release = match release {
+        Some(_) => release.unwrap(),
+        None => {
+            println!("That version was not found");
+            std::process::exit(0);
+        },
+    };
+
+    println!("Downloading Haxe {}", style(&version).yellow());
 
     // Figure out the file name based on the target
     // Currently only supports linux and macOS
     let mut file_name = String::from("haxe-");
     file_name.push_str(version);
 
-    let directory = filesystem::get_directory_name()?;
-    let file_name = filesystem::get_file_name(version)?;
+    let directory = filesystem::get_directory_name();
+    let directory = match directory {
+        Ok(_) => directory.unwrap(),
+        Err(error) => panic!(
+            "Uh oh! I was unable to find the directory: {}.\nPlease create an issue at: {}/issues",
+            error,
+            env!("CARGO_PKG_REPOSITORY")
+        ),
+    };
 
-    // Create a directory...
-    fs::create_dir_all(directory.to_owned() + "/bin")?;
+    let file_name = match filesystem::get_file_name(version) {
+        Ok(_) => file_name,
+        Err(error) => panic!(
+            "Uh oh! I was unable to infer the file name of the tar file: {}.\nPlease create an issue at: {}/issues",
+            error,
+            env!("CARGO_PKG_REPOSITORY")
+        ),
+    };
+
+    // Create the working directory if it doesn't exist 
+    if let Err(error) = fs::create_dir_all(directory.to_owned() + "/bin") {
+        panic!(
+            "Uh oh! I was unable to create the working directory: {:?}.\nPlease create an issue at: {}/issues",
+            error,
+            env!("CARGO_PKG_REPOSITORY")
+        );
+    }
+
 
     // Now we can find the url that matches that file name
     let binary_url = &release
@@ -56,7 +88,7 @@ pub async fn from_github(version: &String) -> Result<Download, Box<dyn Error>> {
         .browser_download_url;
 
     let path = format!("{directory}/bin/{file_name}");
-    download_file(&client, binary_url, &path).await?;
+    download_file(&client, binary_url, &path).await.unwrap();
 
     Ok(Download {
         file_name,

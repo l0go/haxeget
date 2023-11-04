@@ -1,6 +1,7 @@
 use super::filesystem;
 
 use console::style;
+use std::io::Write;
 use std::{env, fs};
 
 pub fn run_use(version: String) {
@@ -27,6 +28,16 @@ pub fn run_use(version: String) {
 
     link_binary(&tar_version, &dir, "haxe");
     link_binary(&tar_version, &dir, "haxelib");
+
+    let mut current_version = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(dir + "/_current/haxe_version")
+        .unwrap();
+
+    current_version
+        .write_fmt(format_args!("{} {}", version, tar_version))
+        .expect("Cannot write to current version cache");
 
     println!("🎉 You are now on Haxe {}", style(&version).yellow());
 }
