@@ -5,6 +5,15 @@ use std::{env, fs};
 
 pub fn run_use(version: String) {
     let directory = filesystem::get_directory_name();
+    
+    // Check if installed already
+    let tar_version = filesystem::get_installed(&version);
+    if tar_version.is_none() {
+        println!("This version is not installed. Try running {}", style(format!("haxeget install {}", version)).yellow());
+        return;
+    }
+    let tar_version = tar_version.unwrap();
+
     let dir = match directory {
         Ok(_) => directory.unwrap(),
         Err(error) => panic!(
@@ -14,16 +23,16 @@ pub fn run_use(version: String) {
         ),
     };
 
-    link_binary(&dir, "haxe");
-    link_binary(&dir, "haxelib");
+    link_binary(&tar_version, &dir, "haxe");
+    link_binary(&tar_version, &dir, "haxelib");
 
     println!("🎉 You are now on Haxe {}", style(&version).yellow());
 }
 
-fn link_binary(directory: &str, name: &str) {
+fn link_binary(version: &str, directory: &str, name: &str) {
     let _ = fs::remove_file(format!("{directory}/{name}"));
     let link = std::os::unix::fs::symlink(
-        format!("{directory}/bin/haxe_20230901120757_a6ac3ae/{name}"),
+        format!("{directory}/bin/{version}/{name}"),
         format!("{directory}/{name}"),
     );
     match link {
