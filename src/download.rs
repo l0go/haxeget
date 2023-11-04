@@ -5,9 +5,7 @@ use std::fs;
 use std::error::Error;
 use std::cmp::min;
 use std::io::Write;
-use futures::executor;
 use futures_util::StreamExt;
-use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
 use flate2::read::GzDecoder;
 use tar::Archive;
@@ -17,22 +15,10 @@ pub struct Download {
     pub directory: String,
 }
 
-pub async fn install(version: String) {
-    println!("Downloading Haxe {}", style(&version).yellow());
-    let download = executor::block_on(from_github(version));
-
-    let _ = match download {
-        Ok(dld) => extract_tarball(dld.directory, dld.file_name),
-        Err(error) => panic!("Uh oh! Download failed: {}.\nPlease create an issue at: {}/issues", error, env!("CARGO_PKG_REPOSITORY"))
-    };
-
-    println!("Installation Complete!")
-}
-
 /*
  * Gets the executable from github and installs 
  */
-pub async fn from_github(version: String) -> Result<Download, Box<dyn Error>> {
+pub async fn from_github(version: &String) -> Result<Download, Box<dyn Error>> {
     let client = reqwest::Client::new();
     let json: github_schema::Root = client.get("https://api.github.com/repos/HaxeFoundation/haxe/releases")
         .header("User-Agent", "haxeget (https://github.com/logo4poop/haxeget)")
@@ -45,7 +31,7 @@ pub async fn from_github(version: String) -> Result<Download, Box<dyn Error>> {
     
 
     let release = json.iter()
-        .find(|&release| release.name == version)
+        .find(|&release| &release.name == version)
         .expect("The provided version was not found");
   
     // Figure out the file name based on the target
@@ -68,21 +54,6 @@ pub async fn from_github(version: String) -> Result<Download, Box<dyn Error>> {
     download_file(&client, &binary_url, &path).await?;
 
     Ok(Download {file_name, directory})
-}
-
-
-// Extract tarball
-pub fn extract_tarball(directory: String, file_name: String) -> Result<(), Box<dyn Error>> {
-    let tarball = fs::File::open(format!("{directory}/bin/{file_name}"))?;
-    let tar = GzDecoder::new(tarball);
-    let mut archive = Archive::new(tar);
-    
-    archive.unpack(format!("{directory}/bin/"))?;
-    fs::remove_file(format!("{directory}/bin/{file_name}"))?;
-   
-    // Get the name of the directory extracted
-    //let name = archive.entries?.find(|x| x.link_name?.)
-    Ok(()) 
 }
 
 // "Borrowed" from https://gist.github.com/giuliano-oliveira/4d11d6b3bb003dba3a1b53f43d81b30d
@@ -117,4 +88,36 @@ async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> Resul
 
     pb.finish_with_message(format!("🎉 Done Downloading!"));
     return Ok(());
+}
+
+// Extract tarball
+pub fn extract_tarball(directory: String, file_name: String) -> Result<(), Box<dyn Error>> {
+    let tarball = fs::File::open(format!("{directory}/bin/{file_name}"))?;
+    let tar = GzDecoder::new(tarball);
+    let mut archive = Archive::new(tar);
+    
+    archive.unpack(format!("{directory}/bin/"))?;
+    fs::remove_file(format!("{directory}/bin/{file_name}"))?;
+  
+    Ok(()) 
+}
+
+pub fn get_binary_directory(directory: &str, file_name: &str) -> Result<String, Box<dyn Error>> {
+    let tarball = fs::File::open(format!("{directory}/bin/{file_name}"))?;
+    let tar = GzDecoder::new(tarball);
+    let mut archive = Archive::new(tar);
+   
+    // Get the name of the directory extracted
+    let mut name = String::new();
+    for file in archive.entries().unwrap() {
+        let file = file.unwrap();
+        name.push_str(file.header()
+                      .path().unwrap()
+                      .as_ref().to_str()
+                      .expect("Unable to get extracted directory name"));
+        break;
+    }
+    name.truncate(name.len() - 1);
+
+    Ok(name) 
 }

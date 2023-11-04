@@ -1,4 +1,7 @@
 use std::env;
+use std::fs::OpenOptions;
+use std::io::{self, Write, BufRead};
+use std::path::Path;
 
 pub fn get_directory_name() -> Result<String, String> {
     let mut directory_path = String::new();
@@ -15,7 +18,7 @@ pub fn get_directory_name() -> Result<String, String> {
     Ok(directory_path)
 }
 
-pub fn get_file_name(version: String) -> Result<String, String> {
+pub fn get_file_name(version: &String) -> Result<String, String> {
     let mut file_name = String::from("haxe-") + version.as_str();
 
     if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
@@ -27,4 +30,43 @@ pub fn get_file_name(version: String) -> Result<String, String> {
     }
 
     Ok(file_name)
+}
+
+/*
+ * Adds a version to the installed cache
+ * This is just a list of all of the versions that are currently installed
+ */
+pub fn add_version_to_installed(version: &String, binary_directory: String) {
+    let mut installed = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(get_directory_name().unwrap() + "/_current/installed")
+        .expect("Cannot open installed cache");
+
+    installed.write_fmt(format_args!("{} {}\n", version, binary_directory))
+        .expect("Cannot write to installed cache");
+}
+
+pub fn get_installed(version: &String) -> Option<String> {
+    if let Ok(lines) = read_lines(get_directory_name().unwrap() + "/_current/installed") {
+        for line in lines {
+            if let Ok(cv) = line {
+                let mut cached_version = cv.split_whitespace();
+                let ver = cached_version.nth(0).unwrap();
+                let directory = cached_version.nth(0).unwrap();
+
+                if &ver == version {
+                    return Some(directory.to_owned());
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<std::fs::File>>>
+where P: AsRef<Path>, {
+    let file = std::fs::File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
