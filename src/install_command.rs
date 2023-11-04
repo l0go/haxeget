@@ -5,18 +5,18 @@ use futures::executor;
 use console::style;
 
 pub async fn run_install(version: String) {
-    match filesystem::get_installed(&version) {
-        Some(_) => { 
-            println!("{}", style("This version is already installed!").yellow());
-            return;
-        },
-        None => {},
-    };
+    // Check if installed already
+    if filesystem::get_installed(&version).is_some() { 
+        println!("{}", style("This version is already installed!").yellow());
+        return;
+    }
 
+    // Downloads the haxe .tar.gz file
     println!("Downloading Haxe {}", style(&version).yellow());
     let download = executor::block_on(download::from_github(&version));
 
-    let _ = match download {
+    // If download was successful, we will extract the tarball and store the version
+    match download {
         Ok(dld) => {
             let location = download::get_binary_directory(&dld.directory, &dld.file_name).unwrap();
             download::extract_tarball(dld.directory, dld.file_name).unwrap();
@@ -25,5 +25,6 @@ pub async fn run_install(version: String) {
         Err(error) => panic!("Uh oh! Download failed: {}.\nPlease create an issue at: {}/issues", error, env!("CARGO_PKG_REPOSITORY"))
     };
 
+    // Tada
     println!("Installation Complete!")
 }

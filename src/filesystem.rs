@@ -18,8 +18,8 @@ pub fn get_directory_name() -> Result<String, String> {
     Ok(directory_path)
 }
 
-pub fn get_file_name(version: &String) -> Result<String, String> {
-    let mut file_name = String::from("haxe-") + version.as_str();
+pub fn get_file_name(version: &str) -> Result<String, String> {
+    let mut file_name = String::from("haxe-") + version;
 
     if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
         file_name.push_str("-linux64.tar.gz");
@@ -49,16 +49,14 @@ pub fn add_version_to_installed(version: &String, binary_directory: String) {
 
 pub fn get_installed(version: &String) -> Option<String> {
     if let Ok(lines) = read_lines(get_directory_name().unwrap() + "/_current/installed") {
-        for line in lines {
-            if let Ok(cv) = line {
-                let mut cached_version = cv.split_whitespace();
-                let ver = cached_version.nth(0).unwrap();
-                let directory = cached_version.nth(0).unwrap();
+        for line in lines.flatten() {
+                let mut cached_version = line.split_whitespace();
+                let ver = cached_version.next().unwrap();
+                let directory = cached_version.next().unwrap();
 
-                if &ver == version {
+                if ver == version {
                     return Some(directory.to_owned());
                 }
-            }
         }
     }
 

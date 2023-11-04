@@ -37,7 +37,7 @@ pub async fn from_github(version: &String) -> Result<Download, Box<dyn Error>> {
     // Figure out the file name based on the target
     // Currently only supports linux and macOS
     let mut file_name = String::from("haxe-");
-    file_name.push_str(&version);
+    file_name.push_str(version);
     
     let directory = filesystem::get_directory_name()?;
     let file_name = filesystem::get_file_name(version)?;
@@ -51,7 +51,7 @@ pub async fn from_github(version: &String) -> Result<Download, Box<dyn Error>> {
         .expect("There was not a valid asset for that version and target...").browser_download_url;
 
     let path = format!("{directory}/bin/{file_name}");
-    download_file(&client, &binary_url, &path).await?;
+    download_file(&client, binary_url, &path).await?;
 
     Ok(Download {file_name, directory})
 }
@@ -78,16 +78,16 @@ async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> Resul
     let mut stream = res.bytes_stream();
 
     while let Some(item) = stream.next().await {
-        let chunk = item.or(Err(format!("Error while downloading file")))?;
+        let chunk = item.or(Err("Error while downloading file".to_string()))?;
         file.write_all(&chunk)
-            .or(Err(format!("Error while writing to file")))?;
+            .or(Err("Error while writing to file".to_string()))?;
         let new = min(downloaded + (chunk.len() as u64), total_size);
         downloaded = new;
         pb.set_position(new);
     }
 
-    pb.finish_with_message(format!("🎉 Done Downloading!"));
-    return Ok(());
+    pb.finish_with_message("🎉 Done Downloading!".to_string());
+    Ok(())
 }
 
 // Extract tarball
@@ -109,15 +109,14 @@ pub fn get_binary_directory(directory: &str, file_name: &str) -> Result<String, 
    
     // Get the name of the directory extracted
     let mut name = String::new();
-    for file in archive.entries().unwrap() {
+    if let Some(file) = archive.entries().unwrap().next() {
         let file = file.unwrap();
         name.push_str(file.header()
                       .path().unwrap()
                       .as_ref().to_str()
                       .expect("Unable to get extracted directory name"));
-        break;
+        name.truncate(name.len() - 1);
     }
-    name.truncate(name.len() - 1);
 
     Ok(name) 
 }
