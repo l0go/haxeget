@@ -21,7 +21,7 @@ pub fn current() {
     let current_version = cache.current_version();
 
     if cache.current_version().is_empty() {
-        println!("{}", style("You currently are not on any version").yellow());
+        println!("{}", style("You are currently not on any version").yellow());
         return;
     }
 

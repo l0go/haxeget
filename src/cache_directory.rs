@@ -130,12 +130,15 @@ impl Cache {
     }
 
     /*
-     * Gets the current version
+     * Returns the current version
      */
     pub fn current_version(&self) -> String {
         fs::read_to_string(self.location.clone() + "/_current/haxe_version").unwrap()
     }
 
+    /*
+     * Sets the current version
+     */
     pub fn set_current_version(&self, version: &String, tar_version: &String) {
         let mut current_version = fs::OpenOptions::new()
             .create(true)
@@ -201,6 +204,7 @@ impl Cache {
     fn create_file(path: String, name: &str) {
         let _ = OpenOptions::new()
             .create(true)
+            .write(true)
             .open(path + "/_current/" + name);
     }
 
