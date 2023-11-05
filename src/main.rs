@@ -1,9 +1,9 @@
-pub mod download;
 pub mod cache_directory;
+pub mod download;
 pub mod github_schema;
 pub mod install_command;
-pub mod uninstall_command;
 pub mod list_command;
+pub mod uninstall_command;
 pub mod use_command;
 
 use clap::{Parser, Subcommand};
@@ -35,7 +35,7 @@ async fn main() {
 
     match args.command {
         Commands::Install { version } => install_command::run_install(version).await,
-        Commands::Uninstall { version} => uninstall_command::run_uninstall(version),
+        Commands::Uninstall { version } => uninstall_command::run_uninstall(version),
         Commands::Use { version } => use_command::run_use(version),
         Commands::List => list_command::installed(),
         Commands::Current => list_command::current(),

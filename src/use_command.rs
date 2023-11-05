@@ -16,7 +16,7 @@ pub fn run_use(version: String) {
         return;
     }
     let tar_version = tar_version.unwrap();
-    
+
     link_binary(&cache, &tar_version, "haxe");
     link_binary(&cache, &tar_version, "haxelib");
 

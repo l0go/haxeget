@@ -1,5 +1,5 @@
-use super::github_schema;
 use super::cache_directory::Cache;
+use super::github_schema;
 
 use console::style;
 use futures_util::StreamExt;
@@ -19,7 +19,7 @@ pub async fn from_github(cache: &Cache, version: &String) -> Result<String, ()> 
         .header(
             "User-Agent",
             "haxeget (https://github.com/logo4poop/haxeget)",
-            )
+        )
         .send()
         .await
         .expect("Was unable to connect to Github API")

@@ -16,16 +16,23 @@ pub fn run_uninstall(version: String) {
     // Check if it is the currently used version
     // If so, delete the symlinks
     let current_version = cache.current_version();
-    if current_version.split_whitespace().next().unwrap() == version {
+    if current_version.is_empty() || current_version.split_whitespace().next().unwrap() == version {
         delete_symlink(&cache.location, "haxe");
         delete_symlink(&cache.location, "haxelib");
     }
 
-    let haxe_directory = format!("{}/bin/{}", cache.location, cache.find_version(&version).unwrap_or("".to_owned()));
+    let haxe_directory = format!(
+        "{}/bin/{}",
+        cache.location,
+        cache.find_version(&version).unwrap_or("".to_owned())
+    );
     if let Err(error) = std::fs::remove_dir_all(haxe_directory) {
-        println!("{}: {}", style("Was unable to remove directory").yellow(), error);
+        println!(
+            "{}: {}",
+            style("Was unable to remove directory").yellow(),
+            error
+        );
     }
-
 
     cache.remove_version(&version);
 }

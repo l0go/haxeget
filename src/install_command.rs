@@ -1,5 +1,5 @@
-use super::download;
 use super::cache_directory::Cache;
+use super::download;
 
 use console::style;
 use futures::executor;

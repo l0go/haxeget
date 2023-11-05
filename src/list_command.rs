@@ -1,4 +1,5 @@
 use super::cache_directory::Cache;
+use console::style;
 
 /*
  * Lists installed Haxe versions
@@ -18,9 +19,12 @@ pub fn installed() {
 pub fn current() {
     let cache = Cache::new();
     let current_version = cache.current_version();
-    let version = current_version 
-        .split_whitespace()
-        .next()
-        .unwrap();
+
+    if cache.current_version().is_empty() {
+        println!("{}", style("You currently are not on any version").yellow());
+        return;
+    }
+
+    let version = current_version.split_whitespace().next().unwrap();
     println!("Haxe {}", version);
 }

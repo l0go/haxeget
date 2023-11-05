@@ -1,11 +1,11 @@
-use std::{env, fs};
-use std::path::Path;
-use std::io::{self, BufRead, Write};
-use std::fs::OpenOptions;
-use std::error::Error;
 use console::style;
-use tar::Archive;
 use flate2::read::GzDecoder;
+use std::error::Error;
+use std::fs::OpenOptions;
+use std::io::{self, BufRead, Write};
+use std::path::Path;
+use std::{env, fs};
+use tar::Archive;
 
 pub struct Cache {
     pub location: String,
@@ -17,20 +17,22 @@ impl Cache {
 
         // Create root
         if let Err(error) = fs::create_dir_all(&path) {
-            println!("{}: {}", style("Was unable to create cache directory").yellow(), error);
+            println!(
+                "{}: {}",
+                style("Was unable to create cache directory").yellow(),
+                error
+            );
         }
 
-        // Create _current directory
-        if let Err(error) = fs::create_dir_all(path.clone() + "/_current") {
-            println!("{}: {}", style("Was unable to create cache directory").yellow(), error);
-        }
+        // Create internal directories
+        Self::create_dir(path.clone(), "_current");
+        Self::create_dir(path.clone(), "bin");
 
-        // Create _current directory
-        if let Err(error) = fs::create_dir_all(path.clone() + "/_current") {
-            println!("{}: {}", style("Was unable to create cache directory").yellow(), error);
-        }
+        // Create current files
+        Self::create_file(path.clone(), "haxe_version");
+        Self::create_file(path.clone(), "installed");
 
-        Self {location: path}
+        Self { location: path }
     }
 
     /*
@@ -47,12 +49,12 @@ impl Cache {
             let file = file.unwrap();
             name.push_str(
                 file.header()
-                .path()
-                .unwrap()
-                .as_ref()
-                .to_str()
-                .expect("Unable to get extracted directory name"),
-                );
+                    .path()
+                    .unwrap()
+                    .as_ref()
+                    .to_str()
+                    .expect("Unable to get extracted directory name"),
+            );
             name.truncate(name.len() - 1);
         }
 
@@ -118,9 +120,12 @@ impl Cache {
             .open(&file)
             .expect("Cannot open installed cache");
 
-
         if let Err(error) = installed.write_fmt(format_args!("{}", buffer)) {
-            println!("{}: {}", style("Was unable to remove the version from the installed cache").yellow(), error);
+            println!(
+                "{}: {}",
+                style("Was unable to remove the version from the installed cache").yellow(),
+                error
+            );
         }
     }
 
@@ -146,7 +151,9 @@ impl Cache {
     /*
      * Returns all installed versions
      */
-    pub fn all_versions(&self) -> Result<std::io::Lines<std::io::BufReader<std::fs::File>>, std::io::Error> {
+    pub fn all_versions(
+        &self,
+    ) -> Result<std::io::Lines<std::io::BufReader<std::fs::File>>, std::io::Error> {
         Self::read_lines(self.location.clone() + "/_current/installed")
     }
 
@@ -168,12 +175,34 @@ impl Cache {
      * Utility for spitting out all of the lines in a file
      */
     fn read_lines<P>(file_name: P) -> io::Result<io::Lines<io::BufReader<std::fs::File>>>
-        where
-            P: AsRef<Path>,
-        {
-            let file = std::fs::File::open(file_name)?;
-            Ok(io::BufReader::new(file).lines())
+    where
+        P: AsRef<Path>,
+    {
+        let file = std::fs::File::open(file_name)?;
+        Ok(io::BufReader::new(file).lines())
+    }
+
+    /*
+     * Create a directory in the cache folder
+     */
+    fn create_dir(path: String, name: &str) {
+        if let Err(error) = fs::create_dir_all(path + "/" + name) {
+            println!(
+                "{}: {}",
+                style("Was unable to create cache directory").yellow(),
+                error
+            );
         }
+    }
+
+    /*
+     * Create a file in the cache/_current directory
+     */
+    fn create_file(path: String, name: &str) {
+        let _ = OpenOptions::new()
+            .create(true)
+            .open(path + "/_current/" + name);
+    }
 
     /*
      * Gets the cache directory's path
@@ -185,9 +214,9 @@ impl Cache {
         if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
             directory_path.push_str(
                 (env::var("XDG_BIN_HOME").unwrap_or((home_dir + "/.local/bin").to_owned())
-                 + "/haxeget")
-                .as_str(),
-                );
+                    + "/haxeget")
+                    .as_str(),
+            );
         } else if cfg!(target_os = "macos") {
             directory_path.push_str((home_dir + "/.haxeget").as_str());
         } else {
