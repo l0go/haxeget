@@ -1,12 +1,13 @@
-use super::filesystem;
+use super::cache_directory::Cache;
 
 use console::style;
-use std::io::Write;
 use std::{env, fs};
 
 pub fn run_use(version: String) {
+    let cache = Cache::new();
+
     // Check if installed already
-    let tar_version = filesystem::find_installed(&version);
+    let tar_version = cache.find_version(&version);
     if tar_version.is_none() {
         println!(
             "This version is not installed. Try running {}",
@@ -15,45 +16,26 @@ pub fn run_use(version: String) {
         return;
     }
     let tar_version = tar_version.unwrap();
+    
+    link_binary(&cache, &tar_version, "haxe");
+    link_binary(&cache, &tar_version, "haxelib");
 
-    let directory = filesystem::get_directory_name();
-    let dir = match directory {
-        Ok(_) => directory.unwrap(),
-        Err(error) => panic!(
-            "Uh oh! I was unable to find the directory: {}.\nPlease create an issue at: {}/issues",
-            error,
-            env!("CARGO_PKG_REPOSITORY")
-        ),
-    };
-
-    link_binary(&tar_version, &dir, "haxe");
-    link_binary(&tar_version, &dir, "haxelib");
-
-    let mut current_version = fs::OpenOptions::new()
-        .create(true)
-        .write(true)
-        .open(dir + "/_current/haxe_version")
-        .unwrap();
-
-    current_version
-        .write_fmt(format_args!("{} {}", version, tar_version))
-        .expect("Cannot write to current version cache");
+    cache.set_current_version(&version, &tar_version);
 
     println!("🎉 You are now on Haxe {}", style(&version).yellow());
 }
 
-fn link_binary(version: &str, directory: &str, name: &str) {
-    let _ = fs::remove_file(format!("{directory}/{name}"));
+fn link_binary(cache: &Cache, version: &str, name: &str) {
+    let _ = fs::remove_file(format!("{}/{name}", cache.location));
     let link = std::os::unix::fs::symlink(
-        format!("{directory}/bin/{version}/{name}"),
-        format!("{directory}/{name}"),
+        format!("{}/bin/{version}/{name}", cache.location),
+        format!("{}/{name}", cache.location),
     );
-    match link {
-        Ok(_) => {}
-        Err(error) => panic!(
+    if let Err(error) = link {
+        panic!(
             "Uh oh! I was unable to create a symlink: {}.\nPlease create an issue at: {}/issues",
             error,
             env!("CARGO_PKG_REPOSITORY")
-        ),
+        )
     }
 }

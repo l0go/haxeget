@@ -1,5 +1,5 @@
-use super::filesystem;
 use super::github_schema;
+use super::cache_directory::Cache;
 
 use console::style;
 use futures_util::StreamExt;
@@ -8,22 +8,18 @@ use std::cmp::min;
 use std::fs;
 use std::io::Write;
 
-pub struct Download {
-    pub file_name: String,
-    pub directory: String,
-}
-
 /*
- * Gets the executable from github and installs
+ * Gets the specified executable from github
+ * I hate this function, but I only have limited time
  */
-pub async fn from_github(version: &String) -> Result<Download, ()> {
+pub async fn from_github(cache: &Cache, version: &String) -> Result<String, ()> {
     let client = reqwest::Client::new();
     let json: github_schema::Root = client
         .get("https://api.github.com/repos/HaxeFoundation/haxe/releases")
         .header(
             "User-Agent",
             "haxeget (https://github.com/logo4poop/haxeget)",
-        )
+            )
         .send()
         .await
         .expect("Was unable to connect to Github API")
@@ -31,53 +27,26 @@ pub async fn from_github(version: &String) -> Result<Download, ()> {
         .await
         .expect("Was unable to parse release JSON");
 
-    let release = json
-        .iter()
-        .find(|&release| &release.name == version);
-
+    let release = json.iter().find(|&release| &release.name == version);
     let release = match release {
         Some(_) => release.unwrap(),
         None => {
             println!("That version was not found");
             std::process::exit(0);
-        },
+        }
     };
 
     println!("Downloading Haxe {}", style(&version).yellow());
 
-    // Figure out the file name based on the target
-    // Currently only supports linux and macOS
-    let mut file_name = String::from("haxe-");
-    file_name.push_str(version);
-
-    let directory = filesystem::get_directory_name();
-    let directory = match directory {
-        Ok(_) => directory.unwrap(),
-        Err(error) => panic!(
-            "Uh oh! I was unable to find the directory: {}.\nPlease create an issue at: {}/issues",
-            error,
-            env!("CARGO_PKG_REPOSITORY")
-        ),
-    };
-
-    let file_name = match filesystem::get_file_name(version) {
-        Ok(_) => file_name,
+    let file_name = get_tarball_name(version);
+    let file_name = match file_name {
+        Ok(_) => file_name.unwrap(),
         Err(error) => panic!(
             "Uh oh! I was unable to infer the file name of the tar file: {}.\nPlease create an issue at: {}/issues",
             error,
             env!("CARGO_PKG_REPOSITORY")
-        ),
+            ),
     };
-
-    // Create the working directory if it doesn't exist 
-    if let Err(error) = fs::create_dir_all(directory.to_owned() + "/bin") {
-        panic!(
-            "Uh oh! I was unable to create the working directory: {:?}.\nPlease create an issue at: {}/issues",
-            error,
-            env!("CARGO_PKG_REPOSITORY")
-        );
-    }
-
 
     // Now we can find the url that matches that file name
     let binary_url = &release
@@ -87,16 +56,16 @@ pub async fn from_github(version: &String) -> Result<Download, ()> {
         .expect("There was not a valid asset for that version and target...")
         .browser_download_url;
 
-    let path = format!("{directory}/bin/{file_name}");
+    let path = format!("{}/bin/{file_name}", cache.location);
     download_file(&client, binary_url, &path).await.unwrap();
 
-    Ok(Download {
-        file_name,
-        directory,
-    })
+    Ok(file_name)
 }
 
-// "Borrowed" from https://gist.github.com/giuliano-oliveira/4d11d6b3bb003dba3a1b53f43d81b30d
+/*
+ * Downloads a file and renders a pretty progress bar
+ * "Borrowed" from https://gist.github.com/giuliano-oliveira/4d11d6b3bb003dba3a1b53f43d81b30d
+ */
 async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> Result<(), String> {
     let res = client
         .get(url)
@@ -128,4 +97,21 @@ async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> Resul
 
     pb.finish_with_message("🎉 Done Downloading!".to_string());
     Ok(())
+}
+
+/*
+ * Infers the name of the tarball
+ */
+pub fn get_tarball_name(version: &str) -> Result<String, String> {
+    let mut file_name = String::from("haxe-") + version;
+
+    if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
+        file_name.push_str("-linux64.tar.gz");
+    } else if cfg!(target_os = "macos") {
+        file_name.push_str("-osx.tar.gz");
+    } else {
+        return Err("Your operating system and/or architecture is unsupported".to_owned());
+    }
+
+    Ok(file_name)
 }
