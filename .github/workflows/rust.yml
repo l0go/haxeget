@@ -11,9 +11,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
+      - uses: actions/checkout@v3
+      - name: Build
       run: cargo build --verbose
+
   create-release:
     runs-on: ubuntu-latest
     steps:
@@ -22,16 +23,16 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
-        upload-assets:
-          needs: create-release
-          strategy:
-            matrix:
-              os:
-                - ubuntu-latest
-                - macos-latest
-          runs-on: ${{ matrix.os }}
-          steps:
-            - uses: actions/checkout@v4
+  upload-assets:
+    needs: create-release
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
           # Comma-separated list of binary names (non-extension portion of filename) to build and upload.
