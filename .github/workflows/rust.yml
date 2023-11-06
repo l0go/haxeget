@@ -21,13 +21,14 @@ jobs:
       - uses: taiki-e/create-gh-release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          upload-assets:
-            needs: create-release
-            strategy:
-              matrix:
-                os:
-                  - ubuntu-latest
-                  - macos-latest
+          
+        upload-assets:
+          needs: create-release
+          strategy:
+            matrix:
+              os:
+                - ubuntu-latest
+                - macos-latest
           runs-on: ${{ matrix.os }}
           steps:
             - uses: actions/checkout@v4
