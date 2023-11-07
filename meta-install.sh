@@ -2,7 +2,7 @@
 # Installs haxeget
 # Code copied from a variety of sources, ty!
 
-version="v0.1.0-ci"
+version="v0.1.1"
 
 is_command() {
   command -v "$1" >/dev/null
