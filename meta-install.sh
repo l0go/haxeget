@@ -54,13 +54,12 @@ extract_tar() {
 
 get_dir() {
     case $OSTYPE in 
-        "darwin")
+        "darwin"*)
             echo "$HOME/.haxeget/"
             return 0;;
-        "linux-gnu")
+        "linux"*)
             echo "$HOME/.local/bin/haxeget"
             return 0;;
-        # TODO: Support non-gnu based linux-distros
     esac
     echo "Unsupported OS: $OSTYPE, please send a pull request"
     return 1
@@ -73,9 +72,9 @@ install() {
     mkdir -p $output_dir
 
     case $OSTYPE in
-        "darwin")
+        "darwin"*)
             http_download "$tmpdir/haxeget.tar.gz" "https://github.com/l0go/haxeget/releases/download/$version/haxeget-x86_64-apple-darwin.tar.gz";;
-        "linux-gnu")
+        "linux"*)
             http_download "$tmpdir/haxeget.tar.gz" "https://github.com/l0go/haxeget/releases/download/$version/haxeget-x86_64-unknown-linux-gnu.tar.gz";;
     esac
     extract_tar "$tmpdir/haxeget.tar.gz" $tmpdir
