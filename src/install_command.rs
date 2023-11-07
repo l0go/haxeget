@@ -1,5 +1,6 @@
 use super::cache_directory::Cache;
 use super::download;
+use super::use_command;
 
 use console::style;
 use futures::executor;
@@ -25,6 +26,8 @@ pub async fn run_install(version: String) {
         cache.extract_tarball(file_name).unwrap();
         cache.add_version(&version, location);
     }
+
+    use_command::run_use(version);
 
     // Tada!
     println!("Installation Complete!")
