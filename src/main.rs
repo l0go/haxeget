@@ -37,9 +37,9 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     match args.command {
-        Commands::Install { version } => install_command::run_install(version).await,
-        Commands::Uninstall { version } => uninstall_command::run_uninstall(version),
-        Commands::Use { version } => use_command::run_use(version),
+        Commands::Install { version } => install_command::run_install(version).await?,
+        Commands::Uninstall { version } => uninstall_command::run_uninstall(version)?,
+        Commands::Use { version } => use_command::run_use(version)?,
         Commands::List => list_command::installed(),
         Commands::Current => list_command::current(),
     }

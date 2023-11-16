@@ -1,17 +1,16 @@
 use super::cache_directory::Cache;
-use console::style;
+use color_eyre::eyre::{eyre, Result, WrapErr};
 
 /*
  * Uninstalls the specified version
  */
-pub fn run_uninstall(version: String) {
+pub fn run_uninstall(version: String) -> Result<()> {
     let cache = Cache::new().expect("Cache was unable to be read");
 
     // Check if already installed
-    if cache.find_version(&version).is_none() {
-        println!("{}", style("This version was not found").yellow());
-        return;
-    }
+    cache
+        .find_version(&version)
+        .ok_or_else(|| eyre!("The specified version was not found"))?;
 
     // Check if it is the currently used version
     // If so, delete the symlinks
@@ -26,15 +25,11 @@ pub fn run_uninstall(version: String) {
         cache.location,
         cache.find_version(&version).unwrap_or("".to_owned())
     );
-    if let Err(error) = std::fs::remove_dir_all(haxe_directory) {
-        println!(
-            "{}: {}",
-            style("Was unable to remove directory").yellow(),
-            error
-        );
-    }
+    std::fs::remove_dir_all(haxe_directory).wrap_err("Was unable to remove directory")?;
 
     cache.remove_version(&version);
+
+    Ok(())
 }
 
 fn delete_symlink(directory: &str, name: &str) {

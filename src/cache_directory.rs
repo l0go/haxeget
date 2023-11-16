@@ -1,3 +1,4 @@
+use color_eyre::eyre::{Result, WrapErr};
 use console::style;
 use flate2::read::GzDecoder;
 use std::fs::OpenOptions;
@@ -5,7 +6,6 @@ use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::{env, fs};
 use tar::Archive;
-use color_eyre::eyre::{WrapErr, Result};
 
 pub struct Cache {
     pub location: String,
@@ -19,8 +19,8 @@ impl Cache {
         let _ = fs::create_dir_all(&path).wrap_err("Was unable to create cache directory");
 
         // Create internal directories
-        Self::create_dir(path.clone(), "_current");
-        Self::create_dir(path.clone(), "bin");
+        Self::create_dir(path.clone(), "_current")?;
+        Self::create_dir(path.clone(), "bin")?;
 
         // Create current files
         Self::create_file(path.clone(), "haxe_version");
@@ -148,9 +148,7 @@ impl Cache {
     /*
      * Returns all installed versions
      */
-    pub fn all_versions(
-        &self,
-    ) -> Result<std::io::Lines<std::io::BufReader<std::fs::File>>> {
+    pub fn all_versions(&self) -> Result<std::io::Lines<std::io::BufReader<std::fs::File>>> {
         Self::read_lines(self.location.clone() + "/_current/installed")
     }
 
@@ -182,14 +180,8 @@ impl Cache {
     /*
      * Create a directory in the cache folder
      */
-    fn create_dir(path: String, name: &str) {
-        if let Err(error) = fs::create_dir_all(path + "/" + name) {
-            println!(
-                "{}: {}",
-                style("Was unable to create cache directory").yellow(),
-                error
-            );
-        }
+    fn create_dir(path: String, name: &str) -> Result<()> {
+       fs::create_dir_all(path + "/" + name).wrap_err("Unable to create cache directory")
     }
 
     /*
