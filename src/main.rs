@@ -7,6 +7,7 @@ pub mod uninstall_command;
 pub mod use_command;
 
 use clap::{Parser, Subcommand};
+use color_eyre::eyre::Result;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -30,8 +31,10 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let args = Cli::parse();
+
+    color_eyre::install()?;
 
     match args.command {
         Commands::Install { version } => install_command::run_install(version).await,
@@ -40,4 +43,6 @@ async fn main() {
         Commands::List => list_command::installed(),
         Commands::Current => list_command::current(),
     }
+
+    Ok(())
 }

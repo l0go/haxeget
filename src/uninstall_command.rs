@@ -5,7 +5,7 @@ use console::style;
  * Uninstalls the specified version
  */
 pub fn run_uninstall(version: String) {
-    let cache = Cache::new();
+    let cache = Cache::new().expect("Cache was unable to be read");
 
     // Check if already installed
     if cache.find_version(&version).is_none() {

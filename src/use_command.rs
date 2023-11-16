@@ -4,7 +4,7 @@ use console::style;
 use std::{env, fs};
 
 pub fn run_use(version: String) {
-    let cache = Cache::new();
+    let cache = Cache::new().expect("Cache was unable to be read");
 
     // Check if installed already
     let tar_version = cache.find_version(&version);

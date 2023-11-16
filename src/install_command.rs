@@ -9,7 +9,7 @@ use futures::executor;
  * Installs a specific version of haxe
  */
 pub async fn run_install(version: String) {
-    let cache = Cache::new();
+    let cache = Cache::new().expect("Cache was unable to be read");
 
     // Check if installed already
     if cache.find_version(&version).is_some() {

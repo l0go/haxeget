@@ -1,28 +1,22 @@
 use console::style;
 use flate2::read::GzDecoder;
-use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::{env, fs};
 use tar::Archive;
+use color_eyre::eyre::{WrapErr, Result};
 
 pub struct Cache {
     pub location: String,
 }
 
 impl Cache {
-    pub fn new() -> Cache {
+    pub fn new() -> Result<Cache> {
         let path = Self::get_path().unwrap();
 
         // Create root
-        if let Err(error) = fs::create_dir_all(&path) {
-            println!(
-                "{}: {}",
-                style("Was unable to create cache directory").yellow(),
-                error
-            );
-        }
+        let _ = fs::create_dir_all(&path).wrap_err("Was unable to create cache directory");
 
         // Create internal directories
         Self::create_dir(path.clone(), "_current");
@@ -32,13 +26,13 @@ impl Cache {
         Self::create_file(path.clone(), "haxe_version");
         Self::create_file(path.clone(), "installed");
 
-        Self { location: path }
+        Ok(Self { location: path })
     }
 
     /*
      * Gets the name of directory that the binaries are stored in based on the tar file
      */
-    pub fn get_haxe_directory_from_tar(&self, file_name: &str) -> Result<String, Box<dyn Error>> {
+    pub fn get_haxe_directory_from_tar(&self, file_name: &str) -> Result<String> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
         let tar = GzDecoder::new(tarball);
         let mut archive = Archive::new(tar);
@@ -156,14 +150,14 @@ impl Cache {
      */
     pub fn all_versions(
         &self,
-    ) -> Result<std::io::Lines<std::io::BufReader<std::fs::File>>, std::io::Error> {
+    ) -> Result<std::io::Lines<std::io::BufReader<std::fs::File>>> {
         Self::read_lines(self.location.clone() + "/_current/installed")
     }
 
     /*
      * Utility that extracts the haxe tarball
      */
-    pub fn extract_tarball(&self, file_name: String) -> Result<(), Box<dyn Error>> {
+    pub fn extract_tarball(&self, file_name: String) -> Result<()> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
         let tar = GzDecoder::new(tarball);
         let mut archive = Archive::new(tar);
@@ -177,7 +171,7 @@ impl Cache {
     /*
      * Utility for spitting out all of the lines in a file
      */
-    fn read_lines<P>(file_name: P) -> io::Result<io::Lines<io::BufReader<std::fs::File>>>
+    fn read_lines<P>(file_name: P) -> Result<io::Lines<io::BufReader<std::fs::File>>>
     where
         P: AsRef<Path>,
     {
