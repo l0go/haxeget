@@ -203,7 +203,7 @@ impl Cache {
      * Create a directory in the cache folder
      */
     fn create_dir(path: String, name: &str) -> Result<()> {
-       fs::create_dir_all(path + "/" + name).wrap_err("Unable to create cache directory")
+        fs::create_dir_all(path + "/" + name).wrap_err("Unable to create cache directory")
     }
 
     /*
