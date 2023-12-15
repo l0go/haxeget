@@ -167,6 +167,28 @@ impl Cache {
     }
 
     /*
+     * Gets the cache directory's path
+     */
+    pub fn get_path() -> Result<String, String> {
+        let mut directory_path = String::new();
+        let home_dir = env::var("HOME").unwrap();
+
+        if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
+            directory_path.push_str(
+                (env::var("XDG_BIN_HOME").unwrap_or((home_dir + "/.local/bin").to_owned())
+                    + "/haxeget")
+                    .as_str(),
+            );
+        } else if cfg!(target_os = "macos") {
+            directory_path.push_str((home_dir + "/.haxeget").as_str());
+        } else {
+            return Err("Your operating system and/or architecture is unsupported".to_owned());
+        }
+
+        Ok(directory_path)
+    }
+
+    /*
      * Utility for spitting out all of the lines in a file
      */
     fn read_lines<P>(file_name: P) -> Result<io::Lines<io::BufReader<std::fs::File>>>
@@ -192,27 +214,5 @@ impl Cache {
             .create(true)
             .write(true)
             .open(path + "/_current/" + name);
-    }
-
-    /*
-     * Gets the cache directory's path
-     */
-    fn get_path() -> Result<String, String> {
-        let mut directory_path = String::new();
-        let home_dir = env::var("HOME").unwrap();
-
-        if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
-            directory_path.push_str(
-                (env::var("XDG_BIN_HOME").unwrap_or((home_dir + "/.local/bin").to_owned())
-                    + "/haxeget")
-                    .as_str(),
-            );
-        } else if cfg!(target_os = "macos") {
-            directory_path.push_str((home_dir + "/.haxeget").as_str());
-        } else {
-            return Err("Your operating system and/or architecture is unsupported".to_owned());
-        }
-
-        Ok(directory_path)
     }
 }

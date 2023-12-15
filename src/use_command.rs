@@ -12,16 +12,20 @@ pub fn run_use(version: String) -> Result<()> {
         eyre!("This version is not installed. Try running `haxeget install {version}`")
     })?;
 
-    link_binary(&cache, &tar_version, "haxe")?;
-    link_binary(&cache, &tar_version, "haxelib")?;
+    link(&cache, &tar_version, "haxe")?;
+    link(&cache, &tar_version, "haxelib")?;
+    link(&cache, &tar_version, "std")?;
 
     cache.set_current_version(&version, &tar_version);
 
     println!("🎉 You are now on Haxe {}", style(&version).yellow());
+    if std::env::var("HAXE_STD_PATH").is_err() {
+        println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
+    }
     Ok(())
 }
 
-fn link_binary(cache: &Cache, version: &str, name: &str) -> Result<()> {
+fn link(cache: &Cache, version: &str, name: &str) -> Result<()> {
     let _ = fs::remove_file(format!("{}/{name}", cache.location));
     std::os::unix::fs::symlink(
         format!("{}/bin/{version}/{name}", cache.location),
