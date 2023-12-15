@@ -19,7 +19,7 @@ pub async fn from_github(cache: &Cache, version: &String) -> Result<String> {
         .get("https://api.github.com/repos/HaxeFoundation/haxe/releases")
         .header(
             "User-Agent",
-            "haxeget (https://github.com/logo4poop/haxeget)",
+            "haxeget (https://github.com/l0go/haxeget)",
         )
         .send()
         .await
