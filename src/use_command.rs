@@ -21,10 +21,8 @@ pub fn run_use(version: String) -> Result<()> {
     println!("🎉 You are now on Haxe {}", style(&version).yellow());
     if cfg!(target_os = "windows"){
         println!("Note: You will need to run `setx /M HAXEPATH {}` and add `%HAXEPATH%` to your PATH vars to use this version of Haxe!", Cache::get_path().unwrap() + "\\haxe");
-    } else {
-        if std::env::var("HAXE_STD_PATH").is_err() {
-            println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
-        }
+    } else if std::env::var("HAXE_STD_PATH").is_err() {
+        println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
     }
     
     Ok(())

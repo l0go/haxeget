@@ -57,7 +57,7 @@ pub async fn download_nightly(cache: &Cache) -> Result<String>{
 
     println!("Downloading Haxe {}", style("nightly").yellow());
 
-    let mut file_name:String = get_tarball_name("nightly").expect("Unable to infer the file name of the tar file");
+    let file_name:String = get_tarball_name("nightly").expect("Unable to infer the file name of the tar file");
 
     // Now we can find the url that matches that file name
     let binary_url = format!("https://build.haxe.org/builds/haxe/{}/{file}", get_sys_name().unwrap(), file = file_name);
@@ -112,9 +112,7 @@ pub fn get_tarball_name(version: &str) -> Result<String> {
     let mut file_name = String::new();
     if version == "nightly" {
         file_name.push_str("haxe_latest"); 
-        if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
-            file_name.push_str(".tar.gz");
-        } else if cfg!(target_os = "macos") {
+        if (cfg!(target_os = "linux") && cfg!(target_arch = "x86_64")) || cfg!(target_os = "macos") {
             file_name.push_str(".tar.gz");
         } else if cfg!(target_os = "windows"){
             file_name.push_str(".zip");
