@@ -6,6 +6,7 @@ use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::{env, fs};
 use tar::Archive;
+use zip::ZipArchive;
 
 pub struct Cache {
     pub location: String,
@@ -34,22 +35,31 @@ impl Cache {
      */
     pub fn get_haxe_directory_from_tar(&self, file_name: &str) -> Result<String> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
-        let tar = GzDecoder::new(tarball);
-        let mut archive = Archive::new(tar);
-
-        // Get the name of the directory extracted
         let mut name = String::new();
-        if let Some(file) = archive.entries().unwrap().next() {
-            let file = file.unwrap();
-            name.push_str(
-                file.header()
-                    .path()
-                    .unwrap()
-                    .as_ref()
-                    .to_str()
-                    .expect("Unable to get extracted directory name"),
-            );
+        if cfg!(target_os = "windows"){
+            let reader = std::io::BufReader::new(tarball);
+            let mut archive = ZipArchive::new(reader).unwrap();
+            let file = archive.by_index(0).unwrap();
+
+            name.push_str(file.name());
             name.truncate(name.len() - 1);
+        } else {
+            let tar = GzDecoder::new(tarball);
+            let mut archive = Archive::new(tar);
+
+            // Get the name of the directory extracted
+            if let Some(file) = archive.entries().unwrap().next() {
+                let file = file.unwrap();
+                name.push_str(
+                    file.header()
+                        .path()
+                        .unwrap()
+                        .as_ref()
+                        .to_str()
+                        .expect("Unable to get extracted directory name"),
+                );
+                name.truncate(name.len() - 1);
+            }
         }
 
         Ok(name)
@@ -157,10 +167,17 @@ impl Cache {
      */
     pub fn extract_tarball(&self, file_name: String) -> Result<()> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
-        let tar = GzDecoder::new(tarball);
-        let mut archive = Archive::new(tar);
 
-        archive.unpack(format!("{}/bin/", self.location))?;
+        if cfg!(target_os = "windows"){
+            let mut zip = ZipArchive::new(tarball).unwrap();
+            zip.extract(format!("{}/bin/", self.location))?;
+        } else {
+            let tar = GzDecoder::new(tarball);
+            let mut archive = Archive::new(tar);
+
+            archive.unpack(format!("{}/bin/", self.location))?;
+        }
+
         fs::remove_file(format!("{}/bin/{file_name}", self.location))?;
 
         Ok(())
@@ -171,7 +188,11 @@ impl Cache {
      */
     pub fn get_path() -> Result<String, String> {
         let mut directory_path = String::new();
-        let home_dir = env::var("HOME").unwrap();
+        let home_dir:String = if cfg!(target_os = "windows") {
+            String::from("C:\\")
+        } else{
+            env::var("HOME").unwrap()
+        };
 
         if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
             directory_path.push_str(
@@ -181,6 +202,8 @@ impl Cache {
             );
         } else if cfg!(target_os = "macos") {
             directory_path.push_str((home_dir + "/.haxeget").as_str());
+        } else if cfg!(target_os = "windows"){
+            directory_path.push_str((home_dir + ".haxeget").as_str());
         } else {
             return Err("Your operating system and/or architecture is unsupported".to_owned());
         }

@@ -99,6 +99,12 @@ pub fn get_tarball_name(version: &str) -> Result<String> {
         file_name.push_str("-linux64.tar.gz");
     } else if cfg!(target_os = "macos") {
         file_name.push_str("-osx.tar.gz");
+    } else if cfg!(target_os = "windows"){
+        if cfg!(target_arch = "x86_64"){
+            file_name.push_str("-win64.zip");
+        } else {
+            file_name.push_str("-win.zip");
+        }
     } else {
         return Err(eyre!(
             "Your operating system and/or architecture is unsupported".to_owned()
