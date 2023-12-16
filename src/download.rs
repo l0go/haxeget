@@ -57,7 +57,7 @@ pub async fn download_nightly(cache: &Cache) -> Result<String>{
 
     println!("Downloading Haxe {}", style("nightly").yellow());
 
-    let mut file_name:String = get_tarball_name("nightly");
+    let mut file_name:String = get_tarball_name("nightly").expect("Unable to infer the file name of the tar file");
 
     // Now we can find the url that matches that file name
     let binary_url = format!("https://build.haxe.org/builds/haxe/{}/{file}", get_sys_name().unwrap(), file = file_name);
