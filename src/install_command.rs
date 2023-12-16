@@ -17,7 +17,11 @@ pub async fn run_install(version: String) -> Result<()> {
     }
 
     // Downloads the haxe .tar.gz file
-    let download = executor::block_on(download::from_github(&cache, &version));
+    let download: std::prelude::v1::Result<String, color_eyre::eyre::Error> = if version.eq("nightly") {
+        executor::block_on(download::download_nightly(&cache))
+    }  else {
+        executor::block_on(download::from_github(&cache, &version))
+    };
 
     // If download was successful, we will extract the tarball and store the version
     if let Ok(file_name) = download {

@@ -52,6 +52,22 @@ pub async fn from_github(cache: &Cache, version: &String) -> Result<String> {
     Ok(file_name)
 }
 
+pub async fn download_nightly(cache: &Cache) -> Result<String>{
+    let client = reqwest::Client::new();
+
+    println!("Downloading Haxe {}", style("nightly").yellow());
+
+    let file_name:String = get_tarball_name("nightly").expect("Unable to infer the file name of the tar file");
+
+    // Now we can find the url that matches that file name
+    let binary_url = format!("https://build.haxe.org/builds/haxe/{}/{file}", get_sys_name().unwrap(), file = file_name);
+
+    let path = format!("{}/bin/{file_name}", cache.location);
+    download_file(&client, binary_url.as_str(), &path).await.unwrap();
+
+    Ok(file_name)
+}
+
 /*
  * Downloads a file and renders a pretty progress bar
  * "Borrowed" from https://gist.github.com/giuliano-oliveira/4d11d6b3bb003dba3a1b53f43d81b30d
@@ -93,17 +109,60 @@ async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> Resul
  * Infers the name of the tarball
  */
 pub fn get_tarball_name(version: &str) -> Result<String> {
-    let mut file_name = String::from("haxe-") + version;
+    let mut file_name = String::new();
+    if version == "nightly" {
+        file_name.push_str("haxe_latest"); 
+        if (cfg!(target_os = "linux") && cfg!(target_arch = "x86_64")) || cfg!(target_os = "macos") {
+            file_name.push_str(".tar.gz");
+        } else if cfg!(target_os = "windows"){
+            file_name.push_str(".zip");
+        } else {
+            return Err(eyre!(
+                "Your operating system and/or architecture is unsupported".to_owned()
+            ));
+        }
+    } else {
+        file_name.push_str("haxe-");
+        file_name.push_str(version);
 
+        if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
+            file_name.push_str("-linux64.tar.gz");
+        } else if cfg!(target_os = "macos") {
+            file_name.push_str("-osx.tar.gz");
+        } else if cfg!(target_os = "windows"){
+            if cfg!(target_arch = "x86_64"){
+                file_name.push_str("-win64.zip");
+            } else {
+                file_name.push_str("-win.zip");
+            }
+        } else {
+            return Err(eyre!(
+                "Your operating system and/or architecture is unsupported".to_owned()
+            ));
+        }
+    }
+    
+
+    Ok(file_name)
+}
+
+fn get_sys_name() -> Result<String> {
+    let mut sys = String::new();
     if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
-        file_name.push_str("-linux64.tar.gz");
+        sys.push_str("linux64");
     } else if cfg!(target_os = "macos") {
-        file_name.push_str("-osx.tar.gz");
+        sys.push_str("mac");
+    } else if cfg!(target_os = "windows"){
+        if cfg!(target_arch = "x86_64"){
+            sys.push_str("windows64");
+        } else {
+            sys.push_str("windows");
+        }
     } else {
         return Err(eyre!(
             "Your operating system and/or architecture is unsupported".to_owned()
         ));
     }
 
-    Ok(file_name)
+    Ok(sys)
 }
