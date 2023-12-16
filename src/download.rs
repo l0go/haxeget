@@ -52,7 +52,7 @@ pub async fn from_github(cache: &Cache, version: &String) -> Result<String> {
     Ok(file_name)
 }
 
-pub async fn downloadnightly(cache: &Cache) -> Result<String>{
+pub async fn download_nightly(cache: &Cache) -> Result<String>{
     let client = reqwest::Client::new();
 
     println!("Downloading Haxe {}", style("nightly").yellow());
