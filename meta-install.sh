@@ -86,7 +86,9 @@ install() {
 add_to_path_zsh() {
     read -p "Do you want to add \"path+=$(get_dir)\" to your ~/.zshrc (this is recommended) (y/n)? " choice
     case "$choice" in 
-        y|Y|yes|YES|Yes ) echo "path+=$(get_dir)" >> ~/.zshrc;;
+        y|Y|yes|YES|Yes )
+            echo "path+=$(get_dir)" >> ~/.zshrc
+            echo "export HAXE_STD_PATH=\"$(get_dir)std/\"" >> ~/.zshrc;;
     esac
     echo "Run \"path+=$(get_dir)\" in order to use haxeget in your current shell"
 }
@@ -94,7 +96,9 @@ add_to_path_zsh() {
 add_to_path_bash() {
     read -p "Do you want to add \"PATH=$PATH:$(get_dir)\" to your ~/.zshrc (this is recommended) (y/n)? " choice
     case "$choice" in 
-        y|Y|yes|YES|Yes ) echo "PATH=$PATH:$(get_dir)" >> ~/.bash_profile;;
+        y|Y|yes|YES|Yes ) 
+            echo "PATH=$PATH:$(get_dir)" >> ~/.bash_profile
+            echo "export HAXE_STD_PATH=$(get_dir)std/" >> ~/.bash_profile;;
     esac
     echo "Run \"PATH=$PATH:$(get_dir)\" in order to use haxeget in your current shell"
 }
