@@ -1,6 +1,6 @@
 use super::cache_directory::Cache;
-use super::download;
 use super::use_command;
+use crate::packages;
 use color_eyre::eyre::{eyre, Result};
 
 use futures::executor;
@@ -17,10 +17,9 @@ pub async fn run_install(version: String) -> Result<()> {
     }
 
     // Downloads the haxe .tar.gz file
-    let download: std::prelude::v1::Result<String, color_eyre::eyre::Error> = if version.eq("nightly") {
-        executor::block_on(download::download_nightly(&cache))
-    }  else {
-        executor::block_on(download::from_github(&cache, &version))
+    let download = match version.as_str() {
+        "nightly" => executor::block_on(packages::haxe_nightly::download(&cache)),
+        _ => executor::block_on(packages::haxe_stable::download(&cache, &version)),
     };
 
     // If download was successful, we will extract the tarball and store the version

@@ -1,8 +1,8 @@
 pub mod cache_directory;
-pub mod download;
 pub mod github_schema;
 pub mod install_command;
 pub mod list_command;
+pub mod packages;
 pub mod uninstall_command;
 pub mod use_command;
 

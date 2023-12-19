@@ -36,7 +36,7 @@ impl Cache {
     pub fn get_haxe_directory_from_tar(&self, file_name: &str) -> Result<String> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
         let mut name = String::new();
-        if cfg!(target_os = "windows"){
+        if cfg!(target_os = "windows") {
             let reader = std::io::BufReader::new(tarball);
             let mut archive = ZipArchive::new(reader).unwrap();
             let file = archive.by_index(0).unwrap();
@@ -168,7 +168,7 @@ impl Cache {
     pub fn extract_tarball(&self, file_name: String) -> Result<()> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
 
-        if cfg!(target_os = "windows"){
+        if cfg!(target_os = "windows") {
             let mut zip = ZipArchive::new(tarball).unwrap();
             zip.extract(format!("{}/bin/", self.location))?;
         } else {
@@ -188,9 +188,9 @@ impl Cache {
      */
     pub fn get_path() -> Result<String, String> {
         let mut directory_path = String::new();
-        let home_dir:String = if cfg!(target_os = "windows") {
+        let home_dir: String = if cfg!(target_os = "windows") {
             String::from("C:\\")
-        } else{
+        } else {
             env::var("HOME").unwrap()
         };
 
@@ -202,7 +202,7 @@ impl Cache {
             );
         } else if cfg!(target_os = "macos") {
             directory_path.push_str((home_dir + "/.haxeget").as_str());
-        } else if cfg!(target_os = "windows"){
+        } else if cfg!(target_os = "windows") {
             directory_path.push_str((home_dir + ".haxeget").as_str());
         } else {
             return Err("Your operating system and/or architecture is unsupported".to_owned());

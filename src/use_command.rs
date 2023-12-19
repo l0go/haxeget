@@ -19,17 +19,17 @@ pub fn run_use(version: String) -> Result<()> {
     cache.set_current_version(&version, &tar_version);
 
     println!("🎉 You are now on Haxe {}", style(&version).yellow());
-    if cfg!(target_os = "windows"){
+    if cfg!(target_os = "windows") {
         println!("Note: You will need to run `setx /M HAXEPATH {}` and add `%HAXEPATH%` to your PATH vars to use this version of Haxe!", Cache::get_path().unwrap() + "\\haxe");
     } else if std::env::var("HAXE_STD_PATH").is_err() {
         println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
     }
-    
+
     Ok(())
 }
 
 fn link(cache: &Cache, version: &str, name: &str) -> Result<()> {
-    if cfg!(target_os = "windows"){
+    if cfg!(target_os = "windows") {
         let _ = fs::remove_dir(format!("{}\\{name}", cache.location));
     } else {
         let _ = fs::remove_file(format!("{}/{name}", cache.location));
@@ -48,12 +48,20 @@ fn link(cache: &Cache, version: &str, name: &str) -> Result<()> {
         std::os::windows::fs::symlink_dir(
             format!("{}\\bin\\{version}\\{name}", cache.location),
             format!("{}\\{name}", cache.location),
-        ).wrap_err(format!("I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}", cache.current_version()))?;
+        )
+        .wrap_err(format!(
+            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}",
+            cache.current_version()
+        ))?;
     } else {
         std::os::windows::fs::symlink_dir(
             format!("{}\\bin\\{version}", cache.location),
             format!("{}\\{name}", cache.location),
-        ).wrap_err(format!("I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}", cache.current_version()))?;
+        )
+        .wrap_err(format!(
+            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}",
+            cache.current_version()
+        ))?;
     }
 
     Ok(())
