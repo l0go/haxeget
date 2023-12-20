@@ -17,24 +17,16 @@ pub async fn run_install(version: String) -> Result<()> {
     }
 
     // Downloads the haxe archive file
-    match version.as_str() {
-        "haxeget" => {
-            let file_name = executor::block_on(packages::haxeget::download(&cache))?;
-            cache.extract_tarball(file_name, "").unwrap();
-        }
-        _ => {
-            let download = if version.as_str().eq("nightly") {
-                executor::block_on(packages::haxe_nightly::download(&cache))
-            } else {
-                executor::block_on(packages::haxe_stable::download(&cache, &version))
-            };
+    let download = if version.as_str().eq("nightly") {
+        executor::block_on(packages::haxe_nightly::download(&cache))
+    } else {
+        executor::block_on(packages::haxe_stable::download(&cache, &version))
+    };
 
-            if let Ok(file_name) = download {
-                let location = cache.get_haxe_dir_name(&file_name).unwrap();
-                cache.extract_tarball(file_name, "bin").unwrap();
-                cache.add_version(&version, location);
-            };
-        }
+    if let Ok(file_name) = download {
+        let location = cache.get_haxe_dir_name(&file_name).unwrap();
+        cache.extract_tarball(file_name, "bin").unwrap();
+        cache.add_version(&version, location);
     };
 
     use_command::run_use(version)?;
