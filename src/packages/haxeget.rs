@@ -1,3 +1,4 @@
+// Used to install haxeget itself
 use super::common;
 use crate::cache_directory::Cache;
 use crate::github_schema;
@@ -5,12 +6,12 @@ use color_eyre::eyre::{eyre, Result};
 use console::style;
 
 /*
- * Gets the Haxe archive from github
+ * Gets the latest release of Haxeget
  */
-pub async fn download(cache: &Cache, version: &String) -> Result<String> {
+pub async fn download(cache: &Cache) -> Result<String> {
     let client = reqwest::Client::new();
     let json: github_schema::Root = client
-        .get("https://api.github.com/repos/HaxeFoundation/haxe/releases")
+        .get("https://api.github.com/repos/l0go/haxeget/releases")
         .header("User-Agent", "haxeget (https://github.com/l0go/haxeget)")
         .send()
         .await
@@ -19,15 +20,11 @@ pub async fn download(cache: &Cache, version: &String) -> Result<String> {
         .await
         .expect("Was unable to parse release JSON");
 
-    let release = json
-        .iter()
-        .find(|&release| &release.name == version)
-        .ok_or_else(|| eyre!("The specified version was not found"))?;
+    let release = &json[0];
 
-    println!("Downloading Haxe {}", style(&version).yellow());
+    println!("Downloading Haxeget {}", style(&release.tag_name).yellow());
 
-    let file_name =
-        common::get_haxe_archive(version).expect("Unable to infer the file name of the tar file");
+    let file_name = get_haxeget_archive().expect("Unable to infer the file name of the tar file");
 
     // Now we can find the url that matches that file name
     let binary_url = &release
@@ -43,4 +40,16 @@ pub async fn download(cache: &Cache, version: &String) -> Result<String> {
         .unwrap();
 
     Ok(file_name)
+}
+
+fn get_haxeget_archive() -> Result<String> {
+    if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
+        Ok("haxeget-x86_64-unknown-linux-gnu.tar.gz".to_owned())
+    } else if cfg!(target_os = "macos") && cfg!(target_arch = "x86_64") {
+        Ok("haxeget-x86_64-apple-darwin.tar.gz".to_owned())
+    } else {
+        Err(eyre!(
+            "Your operating system and/or architecture is unsupported".to_owned()
+        ))
+    }
 }

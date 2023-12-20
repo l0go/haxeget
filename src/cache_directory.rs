@@ -31,11 +31,12 @@ impl Cache {
     }
 
     /*
-     * Gets the name of directory that the binaries are stored in based on the tar file
+     * Gets the name of directory extracted
      */
-    pub fn get_haxe_directory_from_tar(&self, file_name: &str) -> Result<String> {
+    pub fn get_haxe_dir_name(&self, file_name: &str) -> Result<String> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
         let mut name = String::new();
+
         if cfg!(target_os = "windows") {
             let reader = std::io::BufReader::new(tarball);
             let mut archive = ZipArchive::new(reader).unwrap();
@@ -89,6 +90,10 @@ impl Cache {
      * This is just a list of all of the versions that are currently installed
      */
     pub fn add_version(&self, version: &String, binary_directory: String) {
+        if self.find_version(version).is_some() {
+            self.remove_version(version);
+        }
+
         let mut installed = OpenOptions::new()
             .append(true)
             .create(true)
@@ -163,22 +168,23 @@ impl Cache {
     }
 
     /*
-     * Utility that extracts the haxe tarball
+     * Utility that extracts an archive
      */
-    pub fn extract_tarball(&self, file_name: String) -> Result<()> {
-        let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
+    pub fn extract_tarball(&self, file_name: String, to: &str) -> Result<()> {
+        let archive_name = format!("{}/bin/{file_name}", self.location);
+        let archive = fs::File::open(&archive_name)?;
 
         if cfg!(target_os = "windows") {
-            let mut zip = ZipArchive::new(tarball).unwrap();
-            zip.extract(format!("{}/bin/", self.location))?;
+            let mut zip = ZipArchive::new(archive).unwrap();
+            zip.extract(format!("{}/{to}", self.location))?;
         } else {
-            let tar = GzDecoder::new(tarball);
-            let mut archive = Archive::new(tar);
+            let tar = GzDecoder::new(archive);
+            let mut arc = Archive::new(tar);
 
-            archive.unpack(format!("{}/bin/", self.location))?;
+            arc.unpack(format!("{}/{to}", self.location))?;
         }
 
-        fs::remove_file(format!("{}/bin/{file_name}", self.location))?;
+        fs::remove_file(archive_name)?;
 
         Ok(())
     }

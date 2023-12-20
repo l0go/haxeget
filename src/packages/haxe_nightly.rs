@@ -9,7 +9,7 @@ pub async fn download(cache: &Cache) -> Result<String> {
     println!("Downloading Haxe {}", style("nightly").yellow());
 
     let file_name: String =
-        common::get_archive_name("nightly").expect("Unable to infer the file name of the tar file");
+        common::get_haxe_archive("nightly").expect("Unable to infer the file name of the tar file");
 
     // Now we can find the url that matches that file name
     let binary_url = format!(

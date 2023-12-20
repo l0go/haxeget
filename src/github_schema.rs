@@ -34,7 +34,7 @@ pub struct Release {
     pub tarball_url: String,
     #[serde(rename = "zipball_url")]
     pub zipball_url: String,
-    pub body: String,
+    pub body: Option<String>,
     pub reactions: Option<Reactions>,
 }
 
