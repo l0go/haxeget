@@ -195,7 +195,7 @@ impl Cache {
     pub fn get_path() -> Result<String, String> {
         let mut directory_path = String::new();
         let home_dir: String = if cfg!(target_os = "windows") {
-            String::from("C:\\")
+            Self::get_windows_system_drive().unwrap()
         } else {
             env::var("HOME").unwrap()
         };
@@ -243,5 +243,18 @@ impl Cache {
             .create(true)
             .write(true)
             .open(path + "/_current/" + name);
+    }
+
+    fn get_windows_system_drive() -> Result<String, String>{
+        let mut ret_str = String::new();
+        if cfg!(target_os = "windows") {
+            let sys_root = env::var("SystemRoot").unwrap();
+            let lines: Vec<&str> = sys_root.split(":\\").collect();
+            ret_str.push_str(lines.first().unwrap());
+            ret_str.push_str(":\\");
+            Ok(ret_str)
+        } else {
+            Err("Your operating system is not Windows".to_owned())
+        }
     }
 }
