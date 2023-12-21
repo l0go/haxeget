@@ -87,26 +87,26 @@ pub fn get_haxe_archive(version: &str) -> Result<String> {
     Ok(file_name)
 }
 
-fn link(cache: &Cache, version: &str, name: &str) -> Result<()> {
+pub fn link(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
     if cfg!(target_os = "windows") {
-        let _ = fs::remove_dir(format!("{}\\{name}", cache.location));
+        let _ = fs::remove_dir(format!("{}\\{from}", cache.location));
     } else {
-        let _ = fs::remove_file(format!("{}/{name}", cache.location));
+        let _ = fs::remove_file(format!("{}/{from}", cache.location));
     }
 
     // unix
     #[cfg(all(not(target_os = "hermit"), any(unix, doc)))]
     std::os::unix::fs::symlink(
-        format!("{}/bin/{version}/{name}", cache.location),
-        format!("{}/{name}", cache.location),
-    ).wrap_err("I was unable to create a symlink from {cachever}/bin/{version}/{name} to {cachever}/{name}")?;
+        format!("{}/bin/{version}/{from}", cache.location),
+        format!("{}/{to}", cache.location),
+    ).wrap_err(format!("I was unable to create a symlink from {}/bin/{version}/{from} to {}/{to}", cache.location, cache.location))?;
 
     // windows
     #[cfg(any(windows, doc))]
     if name == "std" {
         std::os::windows::fs::symlink_dir(
-            format!("{}\\bin\\{version}\\{name}", cache.location),
-            format!("{}\\{name}", cache.location),
+            format!("{}\\bin\\{version}\\{from}", cache.location),
+            format!("{}\\{to}", cache.location),
         )
         .wrap_err(format!(
             "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}",
@@ -115,7 +115,7 @@ fn link(cache: &Cache, version: &str, name: &str) -> Result<()> {
     } else {
         std::os::windows::fs::symlink_dir(
             format!("{}\\bin\\{version}", cache.location),
-            format!("{}\\{name}", cache.location),
+            format!("{}\\{to}", cache.location),
         )
         .wrap_err(format!(
             "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}",
@@ -132,9 +132,9 @@ pub fn link_haxe(cache: &Cache, version: String) -> Result<()> {
         eyre!("This version is not installed. Try running `haxeget install {version}`")
     })?;
 
-    link(cache, &tar_version, "haxe")?;
-    link(cache, &tar_version, "haxelib")?;
-    link(cache, &tar_version, "std")?;
+    link(cache, &tar_version, "haxe", "haxe")?;
+    link(cache, &tar_version, "haxelib", "haxelib")?;
+    link(cache, &tar_version, "std", "std")?;
 
     cache.set_current_version(&version, &tar_version);
 

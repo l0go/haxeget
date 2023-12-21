@@ -31,37 +31,50 @@ impl Cache {
     }
 
     /*
-     * Gets the name of directory extracted
+     * Gets the directory stored in an archive
      */
     pub fn get_haxe_dir_name(&self, file_name: &str) -> Result<String> {
+        if cfg!(target_os = "windows") {
+            Self::get_extracted_dir_zip(self, file_name)
+        } else {
+            Self::get_extracted_dir_tar(self, file_name)
+        }
+    }
+
+    fn get_extracted_dir_tar(&self, file_name: &str) -> Result<String> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
+        let tar = GzDecoder::new(tarball);
+        let mut archive = Archive::new(tar);
         let mut name = String::new();
 
-        if cfg!(target_os = "windows") {
-            let reader = std::io::BufReader::new(tarball);
-            let mut archive = ZipArchive::new(reader).unwrap();
-            let file = archive.by_index(0).unwrap();
-
-            name.push_str(file.name());
+        // Get the name of the directory extracted
+        if let Some(file) = archive.entries().unwrap().next() {
+            let file = file.unwrap();
+            name.push_str(
+                file.header()
+                    .path()
+                    .unwrap()
+                    .as_ref()
+                    .to_str()
+                    .expect("Unable to get extracted directory name"),
+            );
             name.truncate(name.len() - 1);
-        } else {
-            let tar = GzDecoder::new(tarball);
-            let mut archive = Archive::new(tar);
+        };
 
-            // Get the name of the directory extracted
-            if let Some(file) = archive.entries().unwrap().next() {
-                let file = file.unwrap();
-                name.push_str(
-                    file.header()
-                        .path()
-                        .unwrap()
-                        .as_ref()
-                        .to_str()
-                        .expect("Unable to get extracted directory name"),
-                );
-                name.truncate(name.len() - 1);
-            }
-        }
+        Ok(name)
+    }
+
+    pub fn get_extracted_dir_zip(&self, file_name: &str) -> Result<String> {
+        let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
+
+        let mut name = String::new();
+
+        let reader = std::io::BufReader::new(tarball);
+        let mut archive = ZipArchive::new(reader).unwrap();
+        let file = archive.by_index(0).unwrap();
+
+        name.push_str(file.name());
+        name.truncate(name.len() - 1);
 
         Ok(name)
     }
@@ -170,23 +183,39 @@ impl Cache {
     /*
      * Utility that extracts an archive
      */
-    pub fn extract_tarball(&self, file_name: String, to: &str) -> Result<()> {
-        let archive_name = format!("{}/bin/{file_name}", self.location);
-        let archive = fs::File::open(&archive_name)?;
-
+    pub fn extract_archive(&self, file_name: &str, to: &str) -> Result<()> {
         if cfg!(target_os = "windows") {
-            let mut zip = ZipArchive::new(archive).unwrap();
-            zip.extract(format!("{}/{to}", self.location))?;
+            Self::extract_zip(&self, file_name, to)?;
         } else {
-            let tar = GzDecoder::new(archive);
-            let mut arc = Archive::new(tar);
-
-            arc.unpack(format!("{}/{to}", self.location))?;
+            Self::extract_tarball(&self, file_name, to)?;
         }
 
-        fs::remove_file(archive_name)?;
-
         Ok(())
+    }
+
+    pub fn extract_zip(&self, file_name: &str, to: &str) -> Result<()> {
+            let archive_name = format!("{}/bin/{file_name}", self.location);
+            let archive = fs::File::open(&archive_name)?;
+
+            let mut zip = ZipArchive::new(archive).unwrap();
+            zip.extract(format!("{}/{to}", self.location))?;
+            
+            fs::remove_file(archive_name)?;
+            
+            Ok(())
+    }
+
+    fn extract_tarball(&self, file_name: &str, to: &str) -> Result<()> {
+            let archive_name = format!("{}/bin/{file_name}", self.location);
+            let archive = fs::File::open(&archive_name)?;
+
+            let tar = GzDecoder::new(archive);
+            let mut arc = Archive::new(tar);
+            arc.unpack(format!("{}/{to}", self.location))?;
+
+            fs::remove_file(archive_name)?;
+
+            Ok(())
     }
 
     /*

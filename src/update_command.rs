@@ -11,7 +11,7 @@ pub async fn run_update() -> Result<()> {
     let cache = Cache::new().expect("Cache was unable to be read");
 
     let file_name = executor::block_on(packages::haxeget::download(&cache))?;
-    cache.extract_tarball(file_name, "").unwrap();
+    cache.extract_archive(file_name.as_str(), "").unwrap();
 
     // Tada!
     println!("Update Complete!");
