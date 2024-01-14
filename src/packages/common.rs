@@ -103,13 +103,13 @@ pub fn link(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
 
     // windows
     #[cfg(any(windows, doc))]
-    if name == "std" {
+    if from == "std" {
         std::os::windows::fs::symlink_dir(
             format!("{}\\bin\\{version}\\{from}", cache.location),
             format!("{}\\{to}", cache.location),
         )
         .wrap_err(format!(
-            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}",
+            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{from}",
             cache.current_version()
         ))?;
     } else {
@@ -118,7 +118,7 @@ pub fn link(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
             format!("{}\\{to}", cache.location),
         )
         .wrap_err(format!(
-            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{name}",
+            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{from}",
             cache.current_version()
         ))?;
     }
@@ -140,8 +140,21 @@ pub fn link_haxe(cache: &Cache, version: String) -> Result<()> {
 
     println!("🎉 You are now on Haxe {}", style(&version).yellow());
     if cfg!(target_os = "windows") {
+        // Check if HAXEPATH is set
+        if std::env::var("HAXEPATH").is_err() {
         println!("Note: You will need to run `setx /M HAXEPATH {}` and add `%HAXEPATH%` to your PATH vars to use this version of Haxe!", Cache::get_path().unwrap() + "\\haxe");
+        }
+
+        // Check if HAXEPATH is in PATH
+        let path = std::env::var("PATH").unwrap_or_default();
+        let haxepath = format!("{}\\haxe", Cache::get_path().unwrap());
+
+        
+        if !path.contains(&haxepath) {
+            println!("Warning: HAXEPATH is not in your PATH. Add `%HAXEPATH%` to your PATH vars to use this version of Haxe!");
+        }
     } else if std::env::var("HAXE_STD_PATH").is_err() {
+        // Handle the case for non-windows OS here
         println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
     }
 
