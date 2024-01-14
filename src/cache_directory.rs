@@ -41,7 +41,7 @@ impl Cache {
         }
     }
 
-    fn get_extracted_dir_tar(&self, file_name: &str) -> Result<String> {
+    fn get_extracted_dir_tar(&self, file_name: &str) -> Result<String> { 
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
         let tar = GzDecoder::new(tarball);
         let mut archive = Archive::new(tar);
@@ -65,16 +65,24 @@ impl Cache {
     }
 
     pub fn get_extracted_dir_zip(&self, file_name: &str) -> Result<String> {
-        let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
+        // When unzipped, it doesn't need extra processing to get directory (like tar->gz does)
+        println!("{}/bin/", self.location);
+        let extracted_dir_path = format!("{}\\bin\\", self.location);
+        let mut extracted_dir = fs::read_dir(extracted_dir_path)?;
 
         let mut name = String::new();
 
-        let reader = std::io::BufReader::new(tarball);
-        let mut archive = ZipArchive::new(reader).unwrap();
-        let file = archive.by_index(0).unwrap();
-
-        name.push_str(file.name());
-        name.truncate(name.len() - 1);
+        // Get the name of the already extracted directory
+        if let Some(dir) = extracted_dir.next() {
+            let dir = dir.unwrap();
+            name.push_str(
+                dir.path()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .expect("Unable to get extracted directory name"),
+            );
+        };
 
         Ok(name)
     }
