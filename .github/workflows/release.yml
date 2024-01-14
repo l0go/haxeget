@@ -10,7 +10,10 @@ on:
 
 jobs:
   create-release:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/create-gh-release-action@v1
@@ -24,6 +27,7 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
+          - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
