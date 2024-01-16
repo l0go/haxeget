@@ -7,6 +7,13 @@ The easiest way to install is to use the meta-installer with this one command
 curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/l0go/haxeget/main/meta-install.sh | bash
 ```
 
+The second easiest way is to use cargo
+```sh
+cargo install haxeget
+```
+
+Third easiest way coming soon :eyes:
+
 ## Usage
 ```sh
 # Here is how we would install version 4.3.2 of the compiler
