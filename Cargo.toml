@@ -1,7 +1,10 @@
 [package]
 name = "haxeget"
+authors = ["l0go"]
+description = "The easier way to install and manage Haxe compiler versions"
 version = "0.2.0"
 edition = "2021"
+license = "MIT"
 repository = "https://github.com/l0go/haxeget"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
