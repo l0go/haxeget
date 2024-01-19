@@ -35,7 +35,7 @@ impl Cache {
      */
     pub fn get_haxe_dir_name(&self, file_name: &str) -> Result<String> {
         if cfg!(target_os = "windows") {
-            Self::get_extracted_dir_zip(self, file_name)
+            Self::get_extracted_dir_zip(self)
         } else {
             Self::get_extracted_dir_tar(self, file_name)
         }
@@ -64,9 +64,8 @@ impl Cache {
         Ok(name)
     }
 
-    pub fn get_extracted_dir_zip(&self, file_name: &str) -> Result<String> {
+    fn get_extracted_dir_zip(&self) -> Result<String> {
         // When unzipped, it doesn't need extra processing to get directory (like tar->gz does)
-        println!("{}/bin/", self.location);
         let extracted_dir_path = format!("{}\\bin\\", self.location);
         let mut extracted_dir = fs::read_dir(extracted_dir_path)?;
 
@@ -193,9 +192,9 @@ impl Cache {
      */
     pub fn extract_archive(&self, file_name: &str, to: &str) -> Result<()> {
         if cfg!(target_os = "windows") {
-            Self::extract_zip(&self, file_name, to)?;
+            Self::extract_zip(self, file_name, to)?;
         } else {
-            Self::extract_tarball(&self, file_name, to)?;
+            Self::extract_tarball(self, file_name, to)?;
         }
 
         Ok(())
