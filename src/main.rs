@@ -19,7 +19,7 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    #[command(alias("i"), about = "Installs the specified version")]
+    #[command(alias("i"), about = "Installs the specified version of Haxe or Neko. ex: ``4.3.3``, ``neko``, ``nightly``")]
     Install { version: String },
     #[command(alias("remove"), about = "Uninstalls the specified version")]
     Uninstall { version: String },

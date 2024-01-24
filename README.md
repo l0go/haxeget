@@ -24,6 +24,17 @@ $ haxe # Can now run haxe and haxelib freely
 
 If needed, we can install another version and switch freely between them with the ``haxeget use <version>`` command.
 
+## Commands
+| Command   | About                                                                                |
+| -------   | -----                                                                                |
+| Install   | Installs the specified version of Haxe or Neko. ex: ``4.3.3``, ``neko``, ``nightly`` |
+| Uninstall | Uninstalls the specified version                                                     |
+| Use       | Selects the version of Haxe to use                                                   |
+| List      | Lists the installed versions                                                         |
+| Update    | Updates ``haxeget to the latest version                                              |
+| Current   | Outputs the currently used Haxe version                                              |
+
+
 ## Why Rust?
 I wanted to mess with the Rust programming language and this seemed like a decent opportunity. If I had proper hindsight, I would have written it in a better language like Go, Zig, or even godforbid Haxe itself. This gives us the interesting property of not forcing you to have a pre-existing Haxe compiler set up to install Haxe itself.
 
