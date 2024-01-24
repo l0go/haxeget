@@ -207,8 +207,6 @@ impl Cache {
             let mut zip = ZipArchive::new(archive).unwrap();
             zip.extract(format!("{}/{to}", self.location))?;
             
-            fs::remove_file(archive_name)?;
-            
             Ok(())
     }
 
@@ -219,8 +217,6 @@ impl Cache {
             let tar = GzDecoder::new(archive);
             let mut arc = Archive::new(tar);
             arc.unpack(format!("{}/{to}", self.location))?;
-
-            fs::remove_file(archive_name)?;
 
             Ok(())
     }
