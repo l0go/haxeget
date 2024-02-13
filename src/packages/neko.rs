@@ -1,4 +1,6 @@
 use std::fs;
+use std::io::Error;
+use std::io::ErrorKind;
 use flate2::read::GzDecoder;
 use tar::Archive;
 use super::common;
@@ -53,8 +55,23 @@ pub fn get_neko_dir_name(cache: &Cache, file_name: &str) -> Result<String> {
     }
 }
 
-fn get_extracted_dir_tar(cache: &Cache, file_name: &str) -> Result<String> { 
-    let tarball = fs::File::open(format!("{}/bin/neko/{file_name}", cache.location))?;
+fn get_tarball(cache: &Cache, file_name: &str) -> Result<fs::File, Error> {
+    let path = format!("{}/bin/neko/{file_name}", cache.location);
+
+    match fs::File::open(&path) {
+        Ok(file) => Ok(file),
+        Err(e) => match e.kind() {
+            ErrorKind::NotFound => {
+                let alt_path = format!("{}/bin/{file_name}", cache.location, file_name);
+                return fs::File::open(alt_path);
+            },
+            _ => return Err(e)
+        }
+    }
+}
+
+fn get_extracted_dir_tar(cache: &Cache, file_name: &str) -> Result<String> {
+    let tarball = get_tarball(cache, file_name)?;
     let tar = GzDecoder::new(tarball);
     let mut archive = Archive::new(tar);
     let mut name = String::from("neko/");
