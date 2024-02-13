@@ -62,7 +62,7 @@ fn get_tarball(cache: &Cache, file_name: &str) -> Result<fs::File, Error> {
         Ok(file) => Ok(file),
         Err(e) => match e.kind() {
             ErrorKind::NotFound => {
-                let alt_path = format!("{}/bin/{file_name}", cache.location, file_name);
+                let alt_path = format!("{}/bin/{file_name}", cache.location);
                 return fs::File::open(alt_path);
             },
             _ => return Err(e)
