@@ -31,7 +31,7 @@ If needed, we can install another version and switch freely between them with th
 | Uninstall | Uninstalls the specified version                                                     |
 | Use       | Selects the version of Haxe to use                                                   |
 | List      | Lists the installed versions                                                         |
-| Update    | Updates ``haxeget to the latest version                                              |
+| Update    | Updates ``haxeget`` to the latest version                                            |
 | Current   | Outputs the currently used Haxe version                                              |
 
 
