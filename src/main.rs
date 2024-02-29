@@ -1,6 +1,7 @@
 pub mod cache_directory;
 pub mod github_schema;
 pub mod install_command;
+pub mod rc_command;
 pub mod list_command;
 pub mod packages;
 pub mod uninstall_command;
@@ -27,6 +28,8 @@ enum Commands {
     Use { version: String },
     #[command(alias("ls"), about = "Lists the installed versions")]
     List,
+    #[command(about = "Installs the version of Haxe specified in .haxerc")]
+    Rc,
     #[command(about = "Updates haxeget to the latest version")]
     Update,
     #[command(about = "Outputs the currently used Haxe version")]
@@ -44,6 +47,7 @@ async fn main() -> Result<()> {
         Commands::Uninstall { version } => uninstall_command::run_uninstall(version)?,
         Commands::Use { version } => use_command::run_use(version)?,
         Commands::List => list_command::installed(),
+        Commands::Rc => rc_command::run_rc().await?,
         Commands::Update => update_command::run_update().await?,
         Commands::Current => list_command::current(),
     }
