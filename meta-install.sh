@@ -94,7 +94,7 @@ add_to_path_zsh() {
 }
 
 add_to_path_bash() {
-    read -p "Do you want to add \"PATH=$PATH:$(get_dir)\" to your ~/.zshrc (this is recommended) (y/n)? " choice
+    read -p "Do you want to add \"PATH=$PATH:$(get_dir)\" to your ~/.bash_profile (this is recommended) (y/n)? " choice
     case "$choice" in 
         y|Y|yes|YES|Yes ) 
             echo "PATH=$PATH:$(get_dir)" >> ~/.bash_profile
