@@ -89,10 +89,10 @@ pub fn get_haxe_archive(version: &str) -> Result<String> {
 
 pub fn link(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
     if cfg!(target_os = "windows") {
-        let _ = fs::remove_dir(format!("{}\\{from}", cache.location));
-    } else {
-        let _ = fs::remove_file(format!("{}/{from}", cache.location));
-    }
+        return link_windows(cache, version, from, to); //https://github.com/l0go/haxeget/issues/12
+    } 
+        
+    let _ = fs::remove_file(format!("{}/{from}", cache.location));
 
     // unix
     #[cfg(all(not(target_os = "hermit"), any(unix, doc)))]
@@ -101,24 +101,35 @@ pub fn link(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
         format!("{}/{to}", cache.location),
     ).wrap_err(format!("I was unable to create a symlink from {}/bin/{version}/{from} to {}/{to}", cache.location, cache.location))?;
 
+    Ok(())
+}
+
+fn link_windows(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
+    let mut ver : String = String::from(version);
+    let _ = fs::remove_dir(format!("{}\\{from}", cache.location));
+    if version.ends_with(".zip") {
+        //https://github.com/l0go/haxeget/issues/12
+        ver = cache.check_if_folder_exists_or_extract(version).unwrap();
+    }
+
     // windows
     #[cfg(any(windows, doc))]
     if from == "std" {
         std::os::windows::fs::symlink_dir(
-            format!("{}\\bin\\{version}\\{from}", cache.location),
+            format!("{}\\bin\\{ver}\\{from}", cache.location),
             format!("{}\\{to}", cache.location),
         )
         .wrap_err(format!(
-            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{from}",
+            "I was unable to create a symlink from {0}\\bin\\{ver} to {0}\\{from}",
             cache.current_version()
         ))?;
     } else {
         std::os::windows::fs::symlink_dir(
-            format!("{}\\bin\\{version}", cache.location),
+            format!("{}\\bin\\{ver}", cache.location),
             format!("{}\\{to}", cache.location),
         )
         .wrap_err(format!(
-            "I was unable to create a symlink from {0}\\bin\\{version} to {0}\\{from}",
+            "I was unable to create a symlink from {0}\\bin\\{ver} to {0}\\{from}",
             cache.current_version()
         ))?;
     }

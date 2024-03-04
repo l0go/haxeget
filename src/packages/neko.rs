@@ -58,14 +58,14 @@ pub fn get_neko_dir_name(cache: &Cache, file_name: &str) -> Result<String> {
 fn get_tarball(cache: &Cache, file_name: &str) -> Result<fs::File, Error> {
     let path = format!("{}/bin/neko/{file_name}", cache.location);
 
-    match fs::File::open(&path) {
+    match fs::File::open(path) {
         Ok(file) => Ok(file),
         Err(e) => match e.kind() {
             ErrorKind::NotFound => {
                 let alt_path = format!("{}/bin/{file_name}", cache.location);
-                return fs::File::open(alt_path);
+                fs::File::open(alt_path)
             },
-            _ => return Err(e)
+            _ => Err(e)
         }
     }
 }

@@ -202,7 +202,7 @@ impl Cache {
 
     pub fn extract_zip(&self, file_name: &str, to: &str) -> Result<()> {
             let archive_name = format!("{}/bin/{file_name}", self.location);
-            let archive = fs::File::open(&archive_name)?;
+            let archive = fs::File::open(archive_name)?;
 
             let mut zip = ZipArchive::new(archive).unwrap();
             zip.extract(format!("{}/{to}", self.location))?;
@@ -212,7 +212,7 @@ impl Cache {
 
     fn extract_tarball(&self, file_name: &str, to: &str) -> Result<()> {
             let archive_name = format!("{}/bin/{file_name}", self.location);
-            let archive = fs::File::open(&archive_name)?;
+            let archive = fs::File::open(archive_name)?;
 
             let tar = GzDecoder::new(archive);
             let mut arc = Archive::new(tar);
@@ -247,6 +247,24 @@ impl Cache {
         }
 
         Ok(directory_path)
+    }
+
+    //https://github.com/l0go/haxeget/issues/12
+    pub fn check_if_folder_exists_or_extract(&self, archive_name : &str) -> Result<String>{
+        let paths = fs::read_dir(format!("{}/bin/", self.location)).unwrap();
+        let archive = fs::File::open(archive_name).unwrap();
+        let zip = ZipArchive::new(archive).unwrap();
+        let check_for = zip.file_names().next();
+
+        for path in paths {
+            let unwrapped_path = path.unwrap();
+            if unwrapped_path.path().is_dir() && unwrapped_path.file_name().eq(check_for.unwrap()) {
+                return Ok(String::from(check_for.unwrap()));
+            }
+        }
+
+        self.extract_archive(archive_name, "bin").unwrap();
+        self.get_haxe_dir_name(archive_name)
     }
 
     /*
