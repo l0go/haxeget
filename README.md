@@ -2,17 +2,15 @@
 The *easier* way to install and manage Haxe compiler versions
 
 ## Installation
-The easiest way to install is to use the meta-installer with this one command
+On macOS and Linux, the easiest way to install is to use the meta-installer with this one command
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/l0go/haxeget/main/meta-install.sh | bash
 ```
 
-The second easiest way is to use cargo
+On Windows and other platforms, you can download the executable from the [releases tab](https://github.com/l0go/haxeget/releases) and add it to your path, or you can install via cargo with the following command.
 ```sh
 cargo install haxeget
 ```
-
-Third easiest way coming soon :eyes:
 
 ## Usage
 ```sh
@@ -31,6 +29,7 @@ If needed, we can install another version and switch freely between them with th
 | Uninstall | Uninstalls the specified version                                                     |
 | Use       | Selects the version of Haxe to use                                                   |
 | List      | Lists the installed versions                                                         |
+| Rc        | Installs the version of Haxe specified in .haxerc                                    |
 | Update    | Updates ``haxeget`` to the latest version                                            |
 | Current   | Outputs the currently used Haxe version                                              |
 
