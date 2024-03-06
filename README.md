@@ -7,10 +7,7 @@ On macOS and Linux, the easiest way to install is to use the meta-installer with
 curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/l0go/haxeget/main/meta-install.sh | bash
 ```
 
-On Windows and other platforms, you can download the executable from the [releases tab](https://github.com/l0go/haxeget/releases) and add it to your path, or you can install via cargo with the following command.
-```sh
-cargo install haxeget
-```
+On Windows and other platforms, you can download the executable from the [releases tab](https://github.com/l0go/haxeget/releases) and add it to your path.
 
 ## Usage
 ```sh
