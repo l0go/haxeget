@@ -1,9 +1,9 @@
 use super::common;
-use crate::cache_directory::Cache;
-use color_eyre::eyre::{eyre, Result};
+use crate::cache_directory::{Cache, Version};
+use color_eyre::eyre::{Result, eyre};
 use console::style;
 
-pub fn download(cache: &Cache) -> Result<String> {
+pub fn download(cache: &Cache) -> Result<Version> {
     println!("Downloading Haxe {}", style("nightly").yellow());
 
     let file_name: String = common::get_haxe_archive("nightly")?;
@@ -18,7 +18,12 @@ pub fn download(cache: &Cache) -> Result<String> {
     let path = format!("{}/bin/{file_name}", cache.location);
     common::download_file(binary_url.as_str(), &path).unwrap();
 
-    Ok(file_name)
+    // TODO: Use real version from file
+    Ok(Version {
+        version: "nightly".to_string(),
+        archive_name: file_name.clone(),
+        directory: cache.get_haxe_dir_name(file_name.as_str())?,
+    })
 }
 
 fn get_sys_name() -> Result<String> {

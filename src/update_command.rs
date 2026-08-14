@@ -8,8 +8,10 @@ use color_eyre::eyre::Result;
 pub fn run_update() -> Result<()> {
     let cache = Cache::new().expect("Cache was unable to be read");
 
-    let file_name = packages::haxeget::download(&cache)?;
-    cache.extract_archive(file_name.as_str(), "").unwrap();
+    let version = packages::haxeget::download(&cache)?;
+    cache
+        .extract_archive(version.directory.as_str(), "")
+        .unwrap();
 
     // Tada!
     println!("Update Complete!");

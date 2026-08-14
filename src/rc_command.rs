@@ -1,7 +1,7 @@
 use super::cache_directory::Cache;
 use super::use_command;
 use crate::packages;
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use serde_json::Value;
 
 /*
@@ -30,16 +30,15 @@ pub fn run_rc() -> Result<()> {
     // Downloads the haxe archive file
     let download = packages::haxe_stable::download(&cache, &version);
 
-    if let Ok(file_name) = download {
-        let location = {
-            cache.extract_archive(file_name.as_str(), "bin").unwrap();
-            cache.get_haxe_dir_name(file_name.as_str()).unwrap()
-        };
+    if let Ok(ver) = download {
+        cache
+            .extract_archive(ver.directory.as_str(), "bin")
+            .unwrap();
+        cache.get_haxe_dir_name(ver.directory.as_str()).unwrap();
 
-        cache.add_version(&version, location);
+        cache.add_version(ver.clone());
+        use_command::run_use(ver.version)?;
     };
-
-    use_command::run_use(version)?;
 
     // Tada!
     println!("Installation Complete!");

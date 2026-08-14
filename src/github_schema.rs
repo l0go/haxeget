@@ -1,8 +1,20 @@
 // Generated with https://transform.tools/json-to-rust-serde
 // Could probably remove most of it, but might as well keep most of this for later usage
+use color_eyre::eyre::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 pub type Root = Vec<Release>;
+
+pub fn from_release_url(url: &str) -> Result<Root> {
+    let json: Root = ureq::get(url)
+        .header("User-Agent", "haxeget (https://github.com/l0go/haxeget)")
+        .call()
+        .wrap_err("Was unable to connect to Github API")?
+        .into_body()
+        .read_json()
+        .wrap_err("Was unable to parse release JSON")?;
+    Ok(json)
+}
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

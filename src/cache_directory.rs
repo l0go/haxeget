@@ -11,6 +11,13 @@ pub struct Cache {
     pub location: String,
 }
 
+#[derive(Clone)]
+pub struct Version {
+    pub version: String,
+    pub archive_name: String,
+    pub directory: String,
+}
+
 impl Cache {
     pub fn new() -> Result<Cache> {
         let path = Self::get_path().unwrap();
@@ -88,15 +95,19 @@ impl Cache {
     /*
      * Returns the name of the directory that the version is located in
      */
-    pub fn find_version(&self, version: &String) -> Option<String> {
+    pub fn find_version(&self, version_name: &String) -> Option<Version> {
         if let Ok(lines) = Self::read_lines(self.location.clone() + "/_current/installed") {
             for line in lines.map_while(Result::ok) {
                 let mut cached_version = line.split_whitespace();
                 let ver = cached_version.next().unwrap();
                 let directory = cached_version.next().unwrap();
 
-                if ver == version {
-                    return Some(directory.to_owned());
+                if ver == version_name {
+                    return Some(Version {
+                        version: version_name.to_string(),
+                        archive_name: "".to_string(),
+                        directory: directory.to_owned(),
+                    });
                 }
             }
         }
@@ -108,9 +119,9 @@ impl Cache {
      * Adds a version to the installed cache
      * This is just a list of all of the versions that are currently installed
      */
-    pub fn add_version(&self, version: &String, binary_directory: String) {
-        if self.find_version(version).is_some() {
-            self.remove_version(version);
+    pub fn add_version(&self, version: Version) {
+        if self.find_version(&version.version).is_some() {
+            self.remove_version(version.clone());
         }
 
         let mut installed = OpenOptions::new()
@@ -120,7 +131,7 @@ impl Cache {
             .expect("Cannot open installed cache");
 
         installed
-            .write_fmt(format_args!("{version} {binary_directory}\n"))
+            .write_fmt(format_args!("{} {}\n", version.version, version.directory))
             .expect("Cannot write to installed cache");
     }
 
@@ -128,14 +139,14 @@ impl Cache {
      * Removes the version from the installed cache
      * Does the opposite of the previous function
      */
-    pub fn remove_version(&self, version: &String) {
+    pub fn remove_version(&self, version: Version) {
         let file = self.location.clone() + "/_current/installed";
 
         let mut buffer = String::new();
         if let Ok(lines) = Self::read_lines(&file) {
             for line in lines.map_while(Result::ok) {
-                if !line.contains(version) {
-                    buffer.push_str(&format!("{}\n", &line));
+                if !line.contains(&version.version) {
+                    buffer.push_str(&format!("{}\n", line));
                 }
             }
         }
@@ -153,13 +164,14 @@ impl Cache {
     }
 
     /*
-     * Sets the current version
+     * Sets the current version in the cache file
+     * You probably want to use packages::common::link_haxe
      */
-    pub fn set_current_version(&self, version: &String, tar_version: &String) {
+    pub fn set_current_version(&self, version: Version) {
         Self::create_file(
             self.location.clone(),
             "haxe_version",
-            &format!("{version} {tar_version}"),
+            &format!("{} {}", version.version, version.directory),
         );
     }
 

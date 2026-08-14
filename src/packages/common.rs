@@ -1,6 +1,6 @@
 // This module contains functions that show up in more than one package
-use crate::cache_directory::Cache;
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use crate::cache_directory::{Cache, Version};
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::{fs, io};
@@ -130,23 +130,30 @@ fn link_windows(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()
     Ok(())
 }
 
-pub fn link_haxe(cache: &Cache, version: String) -> Result<()> {
+pub fn link_haxe(cache: &Cache, version: Version) -> Result<()> {
     // Check if not installed already
-    let tar_version = cache.find_version(&version).ok_or_else(|| {
-        eyre!("This version is not installed. Try running `haxeget install {version}`")
-    })?;
+    let version_name = &version.version;
+    let directory = cache
+        .find_version(version_name)
+        .ok_or_else(|| {
+            eyre!("This version is not installed. Try running `haxeget install {version_name}`")
+        })?
+        .directory;
 
-    link(cache, &tar_version, "haxe", "haxe")?;
-    link(cache, &tar_version, "haxelib", "haxelib")?;
-    link(cache, &tar_version, "std", "std")?;
+    link(cache, &directory, "haxe", "haxe")?;
+    link(cache, &directory, "haxelib", "haxelib")?;
+    link(cache, &directory, "std", "std")?;
 
-    cache.set_current_version(&version, &tar_version);
+    cache.set_current_version(version.clone());
 
-    println!("🎉 You are now on Haxe {}", style(&version).yellow());
+    println!("🎉 You are now on Haxe {}", style(version.version).yellow());
     if cfg!(target_os = "windows") {
         // Check if HAXEPATH is set
         if std::env::var("HAXEPATH").is_err() {
-            println!("Note: You will need to run `setx /M HAXEPATH {}` and add `%HAXEPATH%` to your PATH vars to use this version of Haxe!", Cache::get_path().unwrap() + "\\haxe");
+            println!(
+                "Note: You will need to run `setx /M HAXEPATH {}` and add `%HAXEPATH%` to your PATH vars to use this version of Haxe!",
+                Cache::get_path().unwrap() + "\\haxe"
+            );
         }
 
         // Check if HAXEPATH is in PATH
@@ -154,11 +161,16 @@ pub fn link_haxe(cache: &Cache, version: String) -> Result<()> {
         let haxepath = format!("{}\\haxe", Cache::get_path().unwrap());
 
         if !path.contains(&haxepath) {
-            println!("Warning: HAXEPATH is not in your PATH. Add `%HAXEPATH%` to your PATH vars to use this version of Haxe!");
+            println!(
+                "Warning: HAXEPATH is not in your PATH. Add `%HAXEPATH%` to your PATH vars to use this version of Haxe!"
+            );
         }
     } else if std::env::var("HAXE_STD_PATH").is_err() {
         // Handle the case for non-windows OS here
-        println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
+        println!(
+            "Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)",
+            Cache::get_path().unwrap()
+        );
     }
 
     Ok(())

@@ -1,21 +1,16 @@
 // Used to install haxeget itself
 use super::common;
-use crate::cache_directory::Cache;
+use crate::cache_directory::{Cache, Version};
 use crate::github_schema;
-use color_eyre::eyre::{eyre, Context, Result};
+use color_eyre::eyre::{Result, eyre};
 use console::style;
 
 /*
  * Gets the latest release of Haxeget
  */
-pub fn download(cache: &Cache) -> Result<String> {
-    let json: github_schema::Root = ureq::get("https://api.github.com/repos/l0go/haxeget/releases")
-        .header("User-Agent", "haxeget (https://github.com/l0go/haxeget)")
-        .call()
-        .wrap_err("Was unable to connect to Github API")?
-        .into_body()
-        .read_json()
-        .wrap_err("Was unable to parse release JSON")?;
+pub fn download(cache: &Cache) -> Result<Version> {
+    let json =
+        github_schema::from_release_url("https://api.github.com/repos/l0go/haxeget/releases")?;
 
     let release = &json[0];
 
@@ -34,7 +29,11 @@ pub fn download(cache: &Cache) -> Result<String> {
     let path = format!("{}/bin/{file_name}", cache.location);
     common::download_file(binary_url, &path).unwrap();
 
-    Ok(file_name)
+    Ok(Version {
+        version: "haxeget".to_string(),
+        archive_name: file_name.clone(),
+        directory: file_name,
+    })
 }
 
 fn get_haxeget_archive() -> Result<String> {

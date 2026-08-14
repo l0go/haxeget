@@ -1,13 +1,14 @@
 use super::common;
 use crate::cache_directory::Cache;
-use color_eyre::eyre::{eyre, Result};
+use crate::cache_directory::Version;
+use color_eyre::eyre::{Result, eyre};
 use flate2::read::GzDecoder;
 use std::fs;
 use std::io::Error;
 use std::io::ErrorKind;
 use tar::Archive;
 
-pub fn download(cache: &Cache) -> Result<String> {
+pub fn download(cache: &Cache) -> Result<Version> {
     println!("Downloading latest Neko");
 
     let file_name: String = get_neko_archive()?;
@@ -22,22 +23,30 @@ pub fn download(cache: &Cache) -> Result<String> {
     let path = format!("{}/bin/{file_name}", cache.location);
     common::download_file(binary_url.as_str(), &path).unwrap();
 
-    Ok(file_name)
+    Ok(Version {
+        version: "neko".to_string(),
+        archive_name: file_name.clone(),
+        directory: get_neko_dir_name(cache, file_name.as_str())?,
+    })
 }
 
 pub fn link_neko(cache: &Cache) -> Result<()> {
     // Check if not installed
-    let tar_version = cache
+    let directory = cache
         .find_version(&"neko".to_string())
-        .ok_or_else(|| eyre!("Neko is not installed. Try running `haxeget install neko`"))?;
+        .ok_or_else(|| eyre!("Neko is not installed. Try running `haxeget install neko`"))?
+        .version;
 
-    common::link(cache, &tar_version, "neko", "neko")?;
+    common::link(cache, &directory, "neko", "neko")?;
 
     if cfg!(target_os = "windows") {
-        println!("Note: You will need to run `setx /M NEKO_INSTPATH {}` and add `%NEKO_INSTPATH%` to your PATH vars to use Neko!", Cache::get_path().unwrap() + "\\neko");
+        println!(
+            "Note: You will need to run `setx /M NEKO_INSTPATH {}` and add `%NEKO_INSTPATH%` to your PATH vars to use Neko!",
+            Cache::get_path().unwrap() + "\\neko"
+        );
     } /*else if std::env::var("HAXE_STD_PATH").is_err() { I don't know if there are similar variables for non windows systems
-          println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
-      }*/
+    println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
+    }*/
 
     Ok(())
 }

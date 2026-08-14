@@ -1,5 +1,7 @@
+use crate::cache_directory::Version;
+
 use super::cache_directory::Cache;
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{Result, WrapErr, eyre};
 
 /*
  * Uninstalls the specified version
@@ -8,7 +10,7 @@ pub fn run_uninstall(version: String) -> Result<()> {
     let cache = Cache::new().expect("Cache was unable to be read");
 
     // Check if already installed
-    cache
+    let ver = cache
         .find_version(&version)
         .ok_or_else(|| eyre!("The specified version was not found"))?;
 
@@ -23,11 +25,18 @@ pub fn run_uninstall(version: String) -> Result<()> {
     let haxe_directory = format!(
         "{}/bin/{}",
         cache.location,
-        cache.find_version(&version).unwrap_or("".to_owned())
+        cache
+            .find_version(&version)
+            .unwrap_or(Version {
+                version: "".to_string(),
+                archive_name: "".to_string(),
+                directory: "".to_string(),
+            })
+            .directory
     );
     std::fs::remove_dir_all(haxe_directory).wrap_err("Was unable to remove directory")?;
 
-    cache.remove_version(&version);
+    cache.remove_version(ver);
 
     Ok(())
 }
