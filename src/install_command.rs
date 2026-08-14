@@ -3,12 +3,10 @@ use super::use_command;
 use crate::packages;
 use color_eyre::eyre::{eyre, Result};
 
-use futures::executor;
-
 /*
  * Installs a specific version of haxe
  */
-pub async fn run_install(version: String) -> Result<()> {
+pub fn run_install(version: String) -> Result<()> {
     let cache = Cache::new().expect("Cache was unable to be read");
 
     // Check if installed already
@@ -18,14 +16,14 @@ pub async fn run_install(version: String) -> Result<()> {
 
     // Downloads the haxe archive file
     let download = match version.as_str() {
-        "ceramic" => executor::block_on(packages::ceramic::download(&cache)),
-        "nightly" => executor::block_on(packages::haxe_nightly::download(&cache)),
-        "neko" => executor::block_on(packages::neko::download(&cache)),
-        _ => executor::block_on(packages::haxe_stable::download(&cache, &version)),
+        //"ceramic" => executor::block_on(packages::ceramic::download(&cache)),
+        "nightly" => packages::haxe_nightly::download(&cache),
+        "neko" => packages::neko::download(&cache),
+        _ => packages::haxe_stable::download(&cache, &version),
     };
 
     if let Ok(file_name) = download {
-        let location = if version.eq("ceramic") {
+        let location = /*if version.eq("ceramic") {
             let ceramic_dir = Cache::get_path().unwrap() + "/bin/ceramic";
             let _ = std::fs::remove_dir_all(&ceramic_dir);
             let _ = std::fs::create_dir(ceramic_dir);
@@ -33,7 +31,7 @@ pub async fn run_install(version: String) -> Result<()> {
                 .extract_zip(file_name.as_str(), "bin/ceramic")
                 .unwrap();
             "ceramic".to_string()
-        } else if version.eq("neko") {
+        } else */ if version.eq("neko") {
             let neko_dir = Cache::get_path().unwrap() + "/bin/neko";
             let _ = std::fs::remove_dir_all(&neko_dir);
             let _ = std::fs::create_dir(neko_dir);

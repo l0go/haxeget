@@ -4,12 +4,10 @@ use crate::packages;
 use color_eyre::eyre::{eyre, Result};
 use serde_json::Value;
 
-use futures::executor;
-
 /*
  * Installs a specific version of haxe
  */
-pub async fn run_rc() -> Result<()> {
+pub fn run_rc() -> Result<()> {
     let cache = Cache::new().expect("Cache was unable to be read");
 
     let contents = match std::fs::read_to_string("./.haxerc") {
@@ -30,7 +28,7 @@ pub async fn run_rc() -> Result<()> {
     }
 
     // Downloads the haxe archive file
-    let download = executor::block_on(packages::haxe_stable::download(&cache, &version));
+    let download = packages::haxe_stable::download(&cache, &version);
 
     if let Ok(file_name) = download {
         let location = {

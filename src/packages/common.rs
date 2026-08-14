@@ -2,24 +2,24 @@
 use crate::cache_directory::Cache;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use console::style;
-use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
-use std::cmp::min;
-use std::fs;
-use std::io::Write;
+use std::{fs, io};
 
 /*
  * Downloads a file and renders a pretty progress bar
- * "Borrowed" from https://gist.github.com/giuliano-oliveira/4d11d6b3bb003dba3a1b53f43d81b30d
+ * Originally based on https://gist.github.com/giuliano-oliveira/4d11d6b3bb003dba3a1b53f43d81b30d
+ * ureq port based on https://gist.github.com/Roshan-R/8bd44d93e47f409614a5d1574cd16cb8
  */
-pub async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> Result<()> {
-    let res = client
-        .get(url)
-        .send()
-        .await
+pub fn download_file(url: &str, path: &str) -> Result<()> {
+    let res = ureq::get(url)
+        .call()
         .or(Err(eyre!("Failed to GET from '{}'", &url)))?;
-    let total_size = res
-        .content_length()
+
+    let total_size: u64 = res
+        .headers()
+        .get("Content-Length")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse().ok())
         .ok_or_else(|| eyre!("Failed to get content length from '{}'", &url))?;
 
     // Indicatif setup
@@ -29,18 +29,8 @@ pub async fn download_file(client: &reqwest::Client, url: &str, path: &str) -> R
 
     // download chunks
     let mut file = fs::File::create(path).wrap_err("Failed to create file '{path}'")?;
-    let mut downloaded: u64 = 0;
-    let mut stream = res.bytes_stream();
 
-    while let Some(item) = stream.next().await {
-        let chunk = item.wrap_err("Error while downloading file")?;
-        file.write_all(&chunk)
-            .wrap_err("Error while writing file")?;
-        let new = min(downloaded + (chunk.len() as u64), total_size);
-        downloaded = new;
-        pb.set_position(new);
-    }
-
+    io::copy(&mut pb.wrap_read(res.into_body().into_reader()), &mut file).unwrap();
     pb.finish_with_message("🎉 Done Downloading!".to_string());
     Ok(())
 }

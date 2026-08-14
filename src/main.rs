@@ -39,19 +39,18 @@ enum Commands {
     Current,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let args = Cli::parse();
 
     color_eyre::install()?;
 
     match args.command {
-        Commands::Install { version } => install_command::run_install(version).await?,
+        Commands::Install { version } => install_command::run_install(version)?,
         Commands::Uninstall { version } => uninstall_command::run_uninstall(version)?,
         Commands::Use { version } => use_command::run_use(version)?,
         Commands::List => list_command::installed(),
-        Commands::Rc => rc_command::run_rc().await?,
-        Commands::Update => update_command::run_update().await?,
+        Commands::Rc => rc_command::run_rc()?,
+        Commands::Update => update_command::run_update()?,
         Commands::Current => list_command::current(),
     }
 

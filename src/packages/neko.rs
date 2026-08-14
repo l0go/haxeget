@@ -7,13 +7,10 @@ use std::io::Error;
 use std::io::ErrorKind;
 use tar::Archive;
 
-pub async fn download(cache: &Cache) -> Result<String> {
-    let client = reqwest::Client::new();
-
+pub fn download(cache: &Cache) -> Result<String> {
     println!("Downloading latest Neko");
 
-    let file_name: String =
-        get_neko_archive().expect("Unable to infer the file name of the tar file");
+    let file_name: String = get_neko_archive()?;
 
     // Now we can find the url that matches that file name
     let binary_url = format!(
@@ -23,9 +20,7 @@ pub async fn download(cache: &Cache) -> Result<String> {
     );
 
     let path = format!("{}/bin/{file_name}", cache.location);
-    common::download_file(&client, binary_url.as_str(), &path)
-        .await
-        .unwrap();
+    common::download_file(binary_url.as_str(), &path).unwrap();
 
     Ok(file_name)
 }

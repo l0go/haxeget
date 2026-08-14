@@ -1,23 +1,21 @@
 use super::common;
 use crate::cache_directory::Cache;
 use crate::github_schema;
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{eyre, Context, Result};
 use console::style;
 
 /*
  * Gets the Haxe archive from github
  */
-pub async fn download(cache: &Cache, version: &String) -> Result<String> {
-    let client = reqwest::Client::new();
-    let json: github_schema::Root = client
-        .get("https://api.github.com/repos/HaxeFoundation/haxe/releases")
-        .header("User-Agent", "haxeget (https://github.com/l0go/haxeget)")
-        .send()
-        .await
-        .expect("Was unable to connect to Github API")
-        .json()
-        .await
-        .expect("Was unable to parse release JSON");
+pub fn download(cache: &Cache, version: &String) -> Result<String> {
+    let json: github_schema::Root =
+        ureq::get("https://api.github.com/repos/HaxeFoundation/haxe/releases")
+            .header("User-Agent", "haxeget (https://github.com/l0go/haxeget)")
+            .call()
+            .wrap_err("Was unable to connect to Github API")?
+            .into_body()
+            .read_json()
+            .wrap_err("Was unable to parse release JSON")?;
 
     let release = json
         .iter()
@@ -38,9 +36,7 @@ pub async fn download(cache: &Cache, version: &String) -> Result<String> {
         .browser_download_url;
 
     let path = format!("{}/bin/{file_name}", cache.location);
-    common::download_file(&client, binary_url, &path)
-        .await
-        .unwrap();
+    common::download_file(binary_url, &path).unwrap();
 
     Ok(file_name)
 }

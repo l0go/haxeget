@@ -3,13 +3,10 @@ use crate::cache_directory::Cache;
 use color_eyre::eyre::{eyre, Result};
 use console::style;
 
-pub async fn download(cache: &Cache) -> Result<String> {
-    let client = reqwest::Client::new();
-
+pub fn download(cache: &Cache) -> Result<String> {
     println!("Downloading Haxe {}", style("nightly").yellow());
 
-    let file_name: String =
-        common::get_haxe_archive("nightly").expect("Unable to infer the file name of the tar file");
+    let file_name: String = common::get_haxe_archive("nightly")?;
 
     // Now we can find the url that matches that file name
     let binary_url = format!(
@@ -19,9 +16,7 @@ pub async fn download(cache: &Cache) -> Result<String> {
     );
 
     let path = format!("{}/bin/{file_name}", cache.location);
-    common::download_file(&client, binary_url.as_str(), &path)
-        .await
-        .unwrap();
+    common::download_file(binary_url.as_str(), &path).unwrap();
 
     Ok(file_name)
 }
