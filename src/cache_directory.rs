@@ -274,7 +274,7 @@ impl Cache {
     fn create_file(path: String, name: &str, contents: &str) {
         if let Ok(mut file) = OpenOptions::new()
             .create(true)
-            .truncate(true)
+            .truncate(false)
             .write(true)
             .open(path + "/_current/" + name)
         {
