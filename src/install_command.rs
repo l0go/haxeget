@@ -29,13 +29,17 @@ pub async fn run_install(version: String) -> Result<()> {
             let ceramic_dir = Cache::get_path().unwrap() + "/bin/ceramic";
             let _ = std::fs::remove_dir_all(&ceramic_dir);
             let _ = std::fs::create_dir(ceramic_dir);
-            cache.extract_zip(file_name.as_str(), "bin/ceramic").unwrap();
+            cache
+                .extract_zip(file_name.as_str(), "bin/ceramic")
+                .unwrap();
             "ceramic".to_string()
         } else if version.eq("neko") {
             let neko_dir = Cache::get_path().unwrap() + "/bin/neko";
             let _ = std::fs::remove_dir_all(&neko_dir);
             let _ = std::fs::create_dir(neko_dir);
-            cache.extract_archive(file_name.as_str(), "bin/neko").unwrap();
+            cache
+                .extract_archive(file_name.as_str(), "bin/neko")
+                .unwrap();
             packages::neko::get_neko_dir_name(&cache, file_name.as_str()).unwrap()
         } else {
             cache.extract_archive(file_name.as_str(), "bin").unwrap();

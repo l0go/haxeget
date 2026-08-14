@@ -33,5 +33,5 @@ pub fn run_uninstall(version: String) -> Result<()> {
 }
 
 fn delete_symlink(directory: &str, name: &str) {
-    let _ = std::fs::remove_file(format!("{}/{}", directory, name));
+    let _ = std::fs::remove_file(format!("{directory}/{name}"));
 }

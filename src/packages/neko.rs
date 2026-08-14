@@ -1,11 +1,11 @@
-use std::fs;
-use std::io::Error;
-use std::io::ErrorKind;
-use flate2::read::GzDecoder;
-use tar::Archive;
 use super::common;
 use crate::cache_directory::Cache;
 use color_eyre::eyre::{eyre, Result};
+use flate2::read::GzDecoder;
+use std::fs;
+use std::io::Error;
+use std::io::ErrorKind;
+use tar::Archive;
 
 pub async fn download(cache: &Cache) -> Result<String> {
     let client = reqwest::Client::new();
@@ -41,8 +41,8 @@ pub fn link_neko(cache: &Cache) -> Result<()> {
     if cfg!(target_os = "windows") {
         println!("Note: You will need to run `setx /M NEKO_INSTPATH {}` and add `%NEKO_INSTPATH%` to your PATH vars to use Neko!", Cache::get_path().unwrap() + "\\neko");
     } /*else if std::env::var("HAXE_STD_PATH").is_err() { I don't know if there are similar variables for non windows systems
-        println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
-    }*/
+          println!("Note: You will need to add `export HAXE_STD_PATH={}/std/` to your shell config (i.e ~/.bashrc or ~/.zshrc)", Cache::get_path().unwrap());
+      }*/
 
     Ok(())
 }
@@ -64,9 +64,9 @@ fn get_tarball(cache: &Cache, file_name: &str) -> Result<fs::File, Error> {
             ErrorKind::NotFound => {
                 let alt_path = format!("{}/bin/{file_name}", cache.location);
                 fs::File::open(alt_path)
-            },
-            _ => Err(e)
-        }
+            }
+            _ => Err(e),
+        },
     }
 }
 
@@ -119,8 +119,7 @@ fn get_neko_archive() -> Result<String> {
     let mut file_name = String::new();
 
     file_name.push_str("neko_latest");
-    if (cfg!(target_os = "linux") && cfg!(target_arch = "x86_64")) || cfg!(target_os = "macos")
-    {
+    if (cfg!(target_os = "linux") && cfg!(target_arch = "x86_64")) || cfg!(target_os = "macos") {
         file_name.push_str(".tar.gz");
     } else if cfg!(target_os = "windows") {
         file_name.push_str(".zip");

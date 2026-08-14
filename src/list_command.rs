@@ -7,7 +7,7 @@ use console::style;
 pub fn installed() {
     let cache = Cache::new().expect("Cache was unable to be read");
 
-    for version in cache.all_versions().unwrap().flatten() {
+    for version in cache.all_versions().unwrap().map_while(Result::ok) {
         let version = version.split_whitespace().next().unwrap();
         println!("{version}");
     }
@@ -26,5 +26,5 @@ pub fn current() {
     }
 
     let version = current_version.split_whitespace().next().unwrap();
-    println!("Haxe {}", version);
+    println!("Haxe {version}");
 }

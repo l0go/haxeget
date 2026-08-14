@@ -88,10 +88,9 @@ pub fn get_haxe_archive(version: &str) -> Result<String> {
 }
 
 pub fn link(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
-    if cfg!(target_os = "windows") {
-        return link_windows(cache, version, from, to); //https://github.com/l0go/haxeget/issues/12
-    } 
-        
+    #[cfg(any(windows, doc))]
+    return link_windows(cache, version, from, to); //https://github.com/l0go/haxeget/issues/12
+
     let _ = fs::remove_file(format!("{}/{from}", cache.location));
 
     // unix
@@ -99,13 +98,18 @@ pub fn link(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
     std::os::unix::fs::symlink(
         format!("{}/bin/{version}/{from}", cache.location),
         format!("{}/{to}", cache.location),
-    ).wrap_err(format!("I was unable to create a symlink from {}/bin/{version}/{from} to {}/{to}", cache.location, cache.location))?;
+    )
+    .wrap_err(format!(
+        "I was unable to create a symlink from {}/bin/{version}/{from} to {}/{to}",
+        cache.location, cache.location
+    ))?;
 
     Ok(())
 }
 
+#[cfg(any(windows, doc))]
 fn link_windows(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()> {
-    let mut ver : String = String::from(version);
+    let mut ver: String = String::from(version);
     let _ = fs::remove_dir(format!("{}\\{from}", cache.location));
     if version.ends_with(".zip") {
         //https://github.com/l0go/haxeget/issues/12
@@ -113,7 +117,6 @@ fn link_windows(cache: &Cache, version: &str, from: &str, to: &str) -> Result<()
     }
 
     // windows
-    #[cfg(any(windows, doc))]
     if from == "std" {
         std::os::windows::fs::symlink_dir(
             format!("{}\\bin\\{ver}\\{from}", cache.location),
@@ -153,14 +156,13 @@ pub fn link_haxe(cache: &Cache, version: String) -> Result<()> {
     if cfg!(target_os = "windows") {
         // Check if HAXEPATH is set
         if std::env::var("HAXEPATH").is_err() {
-        println!("Note: You will need to run `setx /M HAXEPATH {}` and add `%HAXEPATH%` to your PATH vars to use this version of Haxe!", Cache::get_path().unwrap() + "\\haxe");
+            println!("Note: You will need to run `setx /M HAXEPATH {}` and add `%HAXEPATH%` to your PATH vars to use this version of Haxe!", Cache::get_path().unwrap() + "\\haxe");
         }
 
         // Check if HAXEPATH is in PATH
         let path = std::env::var("PATH").unwrap_or_default();
         let haxepath = format!("{}\\haxe", Cache::get_path().unwrap());
 
-        
         if !path.contains(&haxepath) {
             println!("Warning: HAXEPATH is not in your PATH. Add `%HAXEPATH%` to your PATH vars to use this version of Haxe!");
         }

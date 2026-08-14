@@ -1,9 +1,9 @@
 pub mod cache_directory;
 pub mod github_schema;
 pub mod install_command;
-pub mod rc_command;
 pub mod list_command;
 pub mod packages;
+pub mod rc_command;
 pub mod uninstall_command;
 pub mod update_command;
 pub mod use_command;
@@ -20,7 +20,10 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    #[command(alias("i"), about = "Installs the specified version of Haxe or Neko. ex: ``4.3.3``, ``neko``, ``nightly``")]
+    #[command(
+        alias("i"),
+        about = "Installs the specified version of Haxe or Neko. ex: ``4.3.3``, ``neko``, ``nightly``"
+    )]
     Install { version: String },
     #[command(alias("remove"), about = "Uninstalls the specified version")]
     Uninstall { version: String },

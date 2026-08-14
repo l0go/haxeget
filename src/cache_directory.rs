@@ -1,5 +1,4 @@
 use color_eyre::eyre::{Result, WrapErr};
-use console::style;
 use flate2::read::GzDecoder;
 use std::fs::OpenOptions;
 use std::io::{self, BufRead, Write};
@@ -24,8 +23,8 @@ impl Cache {
         Self::create_dir(path.clone(), "bin")?;
 
         // Create current files
-        Self::create_file(path.clone(), "haxe_version");
-        Self::create_file(path.clone(), "installed");
+        Self::create_file(path.clone(), "haxe_version", "");
+        Self::create_file(path.clone(), "installed", "");
 
         Ok(Self { location: path })
     }
@@ -41,7 +40,7 @@ impl Cache {
         }
     }
 
-    fn get_extracted_dir_tar(&self, file_name: &str) -> Result<String> { 
+    fn get_extracted_dir_tar(&self, file_name: &str) -> Result<String> {
         let tarball = fs::File::open(format!("{}/bin/{file_name}", self.location))?;
         let tar = GzDecoder::new(tarball);
         let mut archive = Archive::new(tar);
@@ -91,7 +90,7 @@ impl Cache {
      */
     pub fn find_version(&self, version: &String) -> Option<String> {
         if let Ok(lines) = Self::read_lines(self.location.clone() + "/_current/installed") {
-            for line in lines.flatten() {
+            for line in lines.map_while(Result::ok) {
                 let mut cached_version = line.split_whitespace();
                 let ver = cached_version.next().unwrap();
                 let directory = cached_version.next().unwrap();
@@ -121,7 +120,7 @@ impl Cache {
             .expect("Cannot open installed cache");
 
         installed
-            .write_fmt(format_args!("{} {}\n", version, binary_directory))
+            .write_fmt(format_args!("{version} {binary_directory}\n"))
             .expect("Cannot write to installed cache");
     }
 
@@ -134,7 +133,7 @@ impl Cache {
 
         let mut buffer = String::new();
         if let Ok(lines) = Self::read_lines(&file) {
-            for line in lines.flatten() {
+            for line in lines.map_while(Result::ok) {
                 if !line.contains(version) {
                     buffer.push_str(&format!("{}\n", &line));
                 }
@@ -143,19 +142,7 @@ impl Cache {
 
         let _ = fs::remove_file(&file);
 
-        let mut installed = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .open(&file)
-            .expect("Cannot open installed cache");
-
-        if let Err(error) = installed.write_fmt(format_args!("{}", buffer)) {
-            println!(
-                "{}: {}",
-                style("Was unable to remove the version from the installed cache").yellow(),
-                error
-            );
-        }
+        Self::create_file(self.location.clone(), "installed", &buffer);
     }
 
     /*
@@ -169,15 +156,11 @@ impl Cache {
      * Sets the current version
      */
     pub fn set_current_version(&self, version: &String, tar_version: &String) {
-        let mut current_version = fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .open(self.location.clone() + "/_current/haxe_version")
-            .unwrap();
-
-        current_version
-            .write_fmt(format_args!("{} {}", version, tar_version))
-            .expect("Cannot write to current version cache");
+        Self::create_file(
+            self.location.clone(),
+            "haxe_version",
+            &format!("{version} {tar_version}"),
+        );
     }
 
     /*
@@ -201,24 +184,24 @@ impl Cache {
     }
 
     pub fn extract_zip(&self, file_name: &str, to: &str) -> Result<()> {
-            let archive_name = format!("{}/bin/{file_name}", self.location);
-            let archive = fs::File::open(archive_name)?;
+        let archive_name = format!("{}/bin/{file_name}", self.location);
+        let archive = fs::File::open(archive_name)?;
 
-            let mut zip = ZipArchive::new(archive).unwrap();
-            zip.extract(format!("{}/{to}", self.location))?;
-            
-            Ok(())
+        let mut zip = ZipArchive::new(archive).unwrap();
+        zip.extract(format!("{}/{to}", self.location))?;
+
+        Ok(())
     }
 
     fn extract_tarball(&self, file_name: &str, to: &str) -> Result<()> {
-            let archive_name = format!("{}/bin/{file_name}", self.location);
-            let archive = fs::File::open(archive_name)?;
+        let archive_name = format!("{}/bin/{file_name}", self.location);
+        let archive = fs::File::open(archive_name)?;
 
-            let tar = GzDecoder::new(archive);
-            let mut arc = Archive::new(tar);
-            arc.unpack(format!("{}/{to}", self.location))?;
+        let tar = GzDecoder::new(archive);
+        let mut arc = Archive::new(tar);
+        arc.unpack(format!("{}/{to}", self.location))?;
 
-            Ok(())
+        Ok(())
     }
 
     /*
@@ -250,7 +233,7 @@ impl Cache {
     }
 
     //https://github.com/l0go/haxeget/issues/12
-    pub fn check_if_folder_exists_or_extract(&self, archive_name : &str) -> Result<String>{
+    pub fn check_if_folder_exists_or_extract(&self, archive_name: &str) -> Result<String> {
         let paths = fs::read_dir(format!("{}/bin/", self.location)).unwrap();
         let archive = fs::File::open(archive_name).unwrap();
         let zip = ZipArchive::new(archive).unwrap();
@@ -286,16 +269,20 @@ impl Cache {
     }
 
     /*
-     * Create a file in the cache/_current directory
+     * Create a file in the cache/_current directory, writing `contents` to it
      */
-    fn create_file(path: String, name: &str) {
-        let _ = OpenOptions::new()
+    fn create_file(path: String, name: &str, contents: &str) {
+        if let Ok(mut file) = OpenOptions::new()
             .create(true)
+            .truncate(true)
             .write(true)
-            .open(path + "/_current/" + name);
+            .open(path + "/_current/" + name)
+        {
+            let _ = file.write_all(contents.as_bytes());
+        }
     }
 
-    fn get_windows_system_drive() -> Result<String, String>{
+    fn get_windows_system_drive() -> Result<String, String> {
         let mut ret_str = String::new();
         if cfg!(target_os = "windows") {
             let sys_root = env::var("SystemRoot").unwrap();

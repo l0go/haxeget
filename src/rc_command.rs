@@ -1,8 +1,8 @@
 use super::cache_directory::Cache;
 use super::use_command;
 use crate::packages;
-use serde_json::Value;
 use color_eyre::eyre::{eyre, Result};
+use serde_json::Value;
 
 use futures::executor;
 
@@ -18,7 +18,10 @@ pub async fn run_rc() -> Result<()> {
     };
 
     let json: Value = serde_json::from_str(&contents)?;
-    let version = json["version"].as_str().expect("Version is not the valid type").to_string();
+    let version = json["version"]
+        .as_str()
+        .expect("Version is not the valid type")
+        .to_string();
 
     // Check if installed already
     if cache.find_version(&version).is_some() {
