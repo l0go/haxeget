@@ -18,11 +18,13 @@ pub fn download(cache: &Cache) -> Result<Version> {
     let path = format!("{}/bin/{file_name}", cache.location);
     common::download_file(binary_url.as_str(), &path).unwrap();
 
-    // TODO: Use real version from file
+    let directory = cache.get_haxe_dir_name(file_name.as_str())?;
+
+    println!("{}", directory.rsplit("_").next().unwrap().to_string());
     Ok(Version {
-        version: "nightly".to_string(),
+        version: directory.rsplit("_").next().unwrap().to_string(),
         archive_name: file_name.clone(),
-        directory: cache.get_haxe_dir_name(file_name.as_str())?,
+        directory,
     })
 }
 

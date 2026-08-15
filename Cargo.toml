@@ -2,7 +2,7 @@
 name = "haxeget"
 authors = ["l0go"]
 description = "The easier way to install and manage Haxe compiler versions"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/l0go/haxeget"
